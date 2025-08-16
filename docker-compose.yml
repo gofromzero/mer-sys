@@ -1,0 +1,179 @@
+version: '3.8'
+
+services:
+  # MySQL 8.0 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: mer_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-mer_system}
+      MYSQL_USER: ${MYSQL_USER:-mer_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mer_pass}
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/shared/database/migrations:/docker-entrypoint-initdb.d
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+      --max_connections=1000
+      --innodb_buffer_pool_size=256M
+    networks:
+      - mer_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Redis 7.0 缓存
+  redis:
+    image: redis:7.0-alpine
+    container_name: mer_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - mer_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 20s
+      retries: 5
+
+  # API 网关服务
+  gateway:
+    build:
+      context: ./backend
+      dockerfile: ./gateway/Dockerfile
+      target: development
+    container_name: mer_gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - GO_ENV=development
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=${MYSQL_USER:-mer_user}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-mer_pass}
+      - DB_NAME=${MYSQL_DATABASE:-mer_system}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:-mer-system-jwt-secret}
+    volumes:
+      - ./backend:/app
+      - ./backend/config:/app/config
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mer_network
+    command: sh -c "cd /app/gateway && go run main.go"
+
+  # 用户服务
+  user-service:
+    build:
+      context: ./backend
+      dockerfile: ./services/user-service/Dockerfile
+      target: development
+    container_name: mer_user_service
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      - GO_ENV=development
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=${MYSQL_USER:-mer_user}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-mer_pass}
+      - DB_NAME=${MYSQL_DATABASE:-mer_system}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./backend:/app
+      - ./backend/config:/app/config
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mer_network
+    command: sh -c "cd /app/services/user-service && go run main.go"
+
+  # 租户服务
+  tenant-service:
+    build:
+      context: ./backend
+      dockerfile: ./services/tenant-service/Dockerfile
+      target: development
+    container_name: mer_tenant_service
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    environment:
+      - GO_ENV=development
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=${MYSQL_USER:-mer_user}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-mer_pass}
+      - DB_NAME=${MYSQL_DATABASE:-mer_system}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./backend:/app
+      - ./backend/config:/app/config
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mer_network
+    command: sh -c "cd /app/services/tenant-service && go run main.go"
+
+  # 前端管理后台
+  admin-panel:
+    build:
+      context: ./frontend/admin-panel
+      dockerfile: Dockerfile
+      target: development
+    container_name: mer_admin_panel
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:8080/api/v1
+    volumes:
+      - ./frontend/admin-panel:/app
+      - /app/node_modules
+    networks:
+      - mer_network
+    command: npm run dev
+
+# 网络配置
+networks:
+  mer_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# 数据卷配置
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
