@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gogf/gf/v2/frame/g"
-	"github.com/spume/mer-sys/shared/config"
+	"github.com/spume/mer-sys/backend/shared/config"
 )
 
 // HealthStatus 健康状态

@@ -1,4 +1,4 @@
-module mer-demo/services/tenant-service
+module github.com/spume/mer-sys/backend/services/tenant-service
 
 go 1.21
 

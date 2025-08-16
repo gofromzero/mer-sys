@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gogf/gf/v2/net/ghttp"
-	"github.com/spume/mer-sys/shared/constants"
-	"github.com/spume/mer-sys/shared/utils"
+	"github.com/spume/mer-sys/backend/shared/constants"
+	"github.com/spume/mer-sys/backend/shared/utils"
 )
 
 // TenantIsolation ensures tenant data isolation

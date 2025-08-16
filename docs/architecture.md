@@ -1142,7 +1142,7 @@ package middleware
 import (
     "strings"
     "github.com/gogf/gf/v2/net/ghttp"
-    "mer-demo/pkg/auth"
+    "github.com/spume/mer-sys/backend/pkg/auth"
 )
 
 func AuthMiddleware() ghttp.HandlerFunc {

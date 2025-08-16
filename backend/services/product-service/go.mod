@@ -1,4 +1,4 @@
-module mer-demo/services/product-service
+module github.com/spume/mer-sys/backend/services/product-service
 
 go 1.21
 

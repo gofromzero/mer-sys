@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gogf/gf/v2/util/gconv"
-	"github.com/spume/mer-sys/shared/config"
+	"github.com/spume/mer-sys/backend/shared/config"
 )
 
 // Cache 缓存管理器

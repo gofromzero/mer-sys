@@ -1,4 +1,4 @@
-module mer-demo/services/merchant-service
+module github.com/spume/mer-sys/backend/services/merchant-service
 
 go 1.21
 

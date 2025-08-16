@@ -1,4 +1,4 @@
-module mer-demo/services/order-service
+module github.com/spume/mer-sys/backend/services/order-service
 
 go 1.21
 

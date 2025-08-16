@@ -1,4 +1,4 @@
-module mer-demo/services/report-service
+module github.com/spume/mer-sys/backend/services/report-service
 
 go 1.21
 

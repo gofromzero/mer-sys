@@ -8,8 +8,8 @@ import (
 
 	"github.com/gogf/gf/v2/crypto/gmd5"
 	"github.com/gogf/gf/v2/frame/g"
-	"github.com/spume/mer-sys/shared/cache"
-	"github.com/spume/mer-sys/shared/types"
+	"github.com/spume/mer-sys/backend/shared/cache"
+	"github.com/spume/mer-sys/backend/shared/types"
 )
 
 // JWTManager JWT管理器

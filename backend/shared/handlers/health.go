@@ -5,8 +5,8 @@ import (
 
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
-	"github.com/spume/mer-sys/shared/health"
-	"github.com/spume/mer-sys/shared/utils"
+	"github.com/spume/mer-sys/backend/shared/health"
+	"github.com/spume/mer-sys/backend/shared/utils"
 )
 
 // HealthHandler 健康检查处理器

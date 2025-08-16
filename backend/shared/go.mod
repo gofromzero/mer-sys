@@ -1,4 +1,4 @@
-module github.com/spume/mer-sys/shared
+module github.com/spume/mer-sys/backend/shared
 
 go 1.21
 

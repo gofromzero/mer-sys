@@ -1,4 +1,4 @@
-module mer-demo/services/fund-service
+module github.com/spume/mer-sys/backend/services/fund-service
 
 go 1.21
 

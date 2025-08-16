@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gogf/gf/v2/database/gdb"
-	"github.com/spume/mer-sys/shared/types"
+	"github.com/spume/mer-sys/backend/shared/types"
 )
 
 // TenantRepository 租户仓储

@@ -1,4 +1,4 @@
-module mer-demo/gateway
+module github.com/spume/mer-sys/backend/gateway
 
 go 1.21
 

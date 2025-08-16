@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/spume/mer-sys/shared/config"
-	"github.com/spume/mer-sys/shared/repository"
-	"github.com/spume/mer-sys/shared/types"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/test/gtest"
+	"github.com/spume/mer-sys/backend/shared/config"
+	"github.com/spume/mer-sys/backend/shared/repository"
+	"github.com/spume/mer-sys/backend/shared/types"
 )
 
 // TestTenantIsolation 测试租户隔离机制
