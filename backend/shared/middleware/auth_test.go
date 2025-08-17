@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gogf/gf/v2/net/ghttp"
+	"github.com/gofromzero/mer-sys/backend/shared/auth"
 	"github.com/gofromzero/mer-sys/backend/shared/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -118,7 +119,7 @@ func TestAuthMiddleware(t *testing.T) {
 	Convey("认证中间件测试", t, func() {
 		
 		Convey("NewAuthMiddleware创建测试", func() {
-			middleware := NewAuthMiddleware()
+			middleware := NewAuthMiddlewareForTest(auth.NewJWTManagerForTest("test-secret", 24), NewMockRoleRepository())
 			So(middleware, ShouldNotBeNil)
 			So(middleware.jwtManager, ShouldNotBeNil)
 			So(middleware.roleRepository, ShouldNotBeNil)
@@ -127,7 +128,7 @@ func TestAuthMiddleware(t *testing.T) {
 		})
 
 		Convey("公开路径配置测试", func() {
-			middleware := NewAuthMiddleware()
+			middleware := NewAuthMiddlewareForTest(auth.NewJWTManagerForTest("test-secret", 24), NewMockRoleRepository())
 			
 			// 测试默认公开路径
 			So(middleware.isPublicPath("/api/v1/auth/login"), ShouldBeTrue)
@@ -146,7 +147,7 @@ func TestAuthMiddleware(t *testing.T) {
 		})
 
 		Convey("跳过路径配置测试", func() {
-			middleware := NewAuthMiddleware()
+			middleware := NewAuthMiddlewareForTest(auth.NewJWTManagerForTest("test-secret", 24), NewMockRoleRepository())
 			
 			// 测试默认跳过路径
 			So(middleware.isSkipPath("/favicon.ico"), ShouldBeTrue)
@@ -160,7 +161,7 @@ func TestAuthMiddleware(t *testing.T) {
 		})
 
 		Convey("Token提取测试", func() {
-			middleware := NewAuthMiddleware()
+			middleware := NewAuthMiddlewareForTest(auth.NewJWTManagerForTest("test-secret", 24), NewMockRoleRepository())
 			
 			Convey("从Authorization头提取", func() {
 				// 创建测试请求
@@ -194,7 +195,7 @@ func TestAuthMiddleware(t *testing.T) {
 		})
 
 		Convey("租户ID提取测试", func() {
-			middleware := NewAuthMiddleware()
+			middleware := NewAuthMiddlewareForTest(auth.NewJWTManagerForTest("test-secret", 24), NewMockRoleRepository())
 			
 			Convey("从X-Tenant-ID头提取", func() {
 				req := httptest.NewRequest("GET", "/api/v1/users", nil)
@@ -218,9 +219,7 @@ func TestPermissionMiddleware(t *testing.T) {
 	Convey("权限中间件测试", t, func() {
 		
 		Convey("权限检查逻辑测试", func() {
-			middleware := NewAuthMiddleware()
 			mockRepo := NewMockRoleRepository()
-			middleware.roleRepository = mockRepo
 			
 			// 设置用户权限
 			userID := uint64(1)
@@ -246,9 +245,7 @@ func TestPermissionMiddleware(t *testing.T) {
 		})
 
 		Convey("角色检查逻辑测试", func() {
-			middleware := NewAuthMiddleware()
 			mockRepo := NewMockRoleRepository()
-			middleware.roleRepository = mockRepo
 			
 			// 设置用户角色
 			userID := uint64(1)
@@ -389,7 +386,7 @@ func TestMiddlewareIntegration(t *testing.T) {
 	Convey("中间件集成测试", t, func() {
 		
 		Convey("中间件配置链测试", func() {
-			middleware := NewAuthMiddleware()
+			middleware := NewAuthMiddlewareForTest(auth.NewJWTManagerForTest("test-secret", 24), NewMockRoleRepository())
 			
 			// 测试配置方法链式调用
 			result := middleware.
@@ -442,7 +439,7 @@ func TestMiddlewareIntegration(t *testing.T) {
 		})
 		
 		Convey("中间件基础功能测试", func() {
-			middleware := NewAuthMiddleware()
+			middleware := NewAuthMiddlewareForTest(auth.NewJWTManagerForTest("test-secret", 24), NewMockRoleRepository())
 			
 			// 测试中间件创建成功
 			So(middleware, ShouldNotBeNil)

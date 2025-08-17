@@ -27,11 +27,40 @@ func NewAuthMiddleware() *AuthMiddleware {
 		publicPaths: []string{
 			"/api/v1/auth/login",
 			"/api/v1/auth/register",
+			"/api/v1/auth/refresh",
 			"/api/v1/health",
 			"/api/v1/health/ready",
 			"/api/v1/health/live",
 			"/api/v1/health/simple",
 			"/api/v1/health/component",
+			"/api/v1/ping",
+			"/api/v1/version",
+		},
+		skipPaths: []string{
+			"/favicon.ico",
+			"/robots.txt",
+			"/static",
+			"/assets",
+		},
+	}
+}
+
+// NewAuthMiddlewareForTest 创建测试用认证中间件实例
+func NewAuthMiddlewareForTest(jwtManager *auth.JWTManager, roleRepo repository.RoleRepository) *AuthMiddleware {
+	return &AuthMiddleware{
+		jwtManager:     jwtManager,
+		roleRepository: roleRepo,
+		publicPaths: []string{
+			"/api/v1/auth/login",
+			"/api/v1/auth/register",
+			"/api/v1/auth/refresh",
+			"/api/v1/health",
+			"/api/v1/health/ready",
+			"/api/v1/health/live",
+			"/api/v1/health/simple",
+			"/api/v1/health/component",
+			"/api/v1/ping",
+			"/api/v1/version",
 		},
 		skipPaths: []string{
 			"/favicon.ico",
@@ -345,8 +374,10 @@ func (am *AuthMiddleware) extractToken(r *ghttp.Request) string {
 	}
 
 	// 4. 从Cookie提取（如果启用了Cookie认证）
-	if cookie := r.Cookie.Get("access_token"); cookie != nil {
-		return cookie.String()
+	if r.Cookie != nil {
+		if cookie := r.Cookie.Get("access_token"); cookie != nil {
+			return cookie.String()
+		}
 	}
 
 	return ""

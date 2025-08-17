@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -28,6 +29,15 @@ func NewJWTManager() *JWTManager {
 		cache:      cache.NewCache("jwt"),
 		secret:     secret,
 		expireTime: time.Duration(expire) * time.Hour,
+	}
+}
+
+// NewJWTManagerForTest 创建测试用JWT管理器（避免依赖配置文件）
+func NewJWTManagerForTest(secret string, expireHours int) *JWTManager {
+	return &JWTManager{
+		cache:      cache.NewMockCache(), // 使用模拟缓存
+		secret:     secret,
+		expireTime: time.Duration(expireHours) * time.Hour,
 	}
 }
 
@@ -257,7 +267,9 @@ func (j *JWTManager) RevokeUserTokens(ctx context.Context, userID uint64) error 
 
 // generateTokenID 生成令牌ID
 func (j *JWTManager) generateTokenID(userID uint64, tokenType string, issuedAt time.Time) string {
-	data := fmt.Sprintf("%d-%s-%d-%s", userID, tokenType, issuedAt.Unix(), j.secret)
+	// 使用纳秒级时间戳和随机数确保唯一性
+	randomNum := rand.Int63()
+	data := fmt.Sprintf("%d-%s-%d-%d-%s", userID, tokenType, issuedAt.UnixNano(), randomNum, j.secret)
 	return gmd5.MustEncryptString(data)
 }
 
