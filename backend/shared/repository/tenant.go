@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/gofromzero/mer-sys/backend/shared/types"
 	"github.com/gogf/gf/v2/database/gdb"
-	"github.com/spume/mer-sys/backend/shared/types"
 )
 
 // TenantRepository 租户仓储

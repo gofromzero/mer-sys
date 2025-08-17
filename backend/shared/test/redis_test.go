@@ -5,11 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gogf/gf/v2/test/gtest"
-	"github.co
-	"github.com/spume/mer-sys/backend/shared/auth"
-	"github.com/spume/mer-sys/backend/shared/cache"
-	"github.com/spume/mer-sys/backend/shared/config"
+	"github.com/gofromzero/mer-sys/backend/shared/auth"
+	"github.com/gofromzero/mer-sys/backend/shared/cache"
+	"github.com/gofromzero/mer-sys/backend/shared/config"
+	"github.com/gofromzero/mer-sys/backend/shared/types"
 	"github.com/gogf/gf/v2/test/gtest"
 )
 

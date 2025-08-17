@@ -52,7 +52,8 @@ func InitDatabase() error {
 				Pass:     config.Pass,
 				Name:     config.Name,
 				Type:     config.Type,
-				Role:     config.Role,
+				// Role字段需要转换为gdb.Role类型
+				Role:     gdb.Role(config.Role),
 				Debug:    config.Debug,
 				Charset:  config.Charset,
 				Timezone: config.Timezone,

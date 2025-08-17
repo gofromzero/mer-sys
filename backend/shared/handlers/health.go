@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/gofromzero/mer-sys/backend/shared/health"
+	"github.com/gofromzero/mer-sys/backend/shared/utils"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
-	"github.com/spume/mer-sys/backend/shared/health"
-	"github.com/spume/mer-sys/backend/shared/utils"
 )
 
 // HealthHandler 健康检查处理器
@@ -150,7 +151,7 @@ func (h *HealthHandler) SimpleHealth(r *ghttp.Request) {
 	response := map[string]interface{}{
 		"status":    "ok",
 		"healthy":   isHealthy,
-		"timestamp": g.Time().Now(),
+		"timestamp": time.Now(),
 		"service":   h.checker.CheckHealth(ctx).Service,
 	}
 

@@ -1,0 +1,20 @@
+# Basic config for unit tests
+server:
+  address:     ":0"  # Use random port for testing
+  openapiPath: "/api.json"
+  swaggerPath: "/swagger"
+
+# JWT configuration for testing
+jwt:
+  secret: "test-jwt-secret-key"
+  expire: 24
+
+# Database and Redis disabled for unit tests
+database:
+  default:
+    type: "mysql"
+    link: "mysql:root:123456@tcp(127.0.0.1:3306)/test"
+
+redis:
+  default:
+    address: "127.0.0.1:6379"

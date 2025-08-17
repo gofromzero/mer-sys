@@ -4,11 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/test/gtest"
-	"github.com/spume/mer-sys/backend/shared/config"
-	"github.com/spume/mer-sys/backend/shared/repository"
-	"github.com/spume/mer-sys/backend/shared/types"
+	"github.com/gofromzero/mer-sys/backend/shared/config"
+	"github.com/gofromzero/mer-sys/backend/shared/repository"
+	"github.com/gofromzero/mer-sys/backend/shared/types"
 )
 
 // TestTenantIsolation 测试租户隔离机制
@@ -61,8 +60,8 @@ func TestTenantIsolation(t *testing.T) {
 				found2 = true
 			}
 		}
-		t.AssertEQ(found1, true, "租户1应该能看到testuser1")
-		t.AssertEQ(found2, false, "租户1不应该能看到testuser2")
+		t.AssertEQ(found1, true)
+		t.AssertEQ(found2, false)
 
 		// 验证租户隔离：租户2只能看到自己的用户
 		users2, err := userRepo.FindAllByTenant(ctx2)
@@ -79,21 +78,21 @@ func TestTenantIsolation(t *testing.T) {
 				t.AssertEQ(user.TenantID, uint64(2))
 			}
 		}
-		t.AssertEQ(found1, false, "租户2不应该能看到testuser1")
-		t.AssertEQ(found2, true, "租户2应该能看到testuser2")
+		t.AssertEQ(found1, false)
+		t.AssertEQ(found2, true)
 
 		// 验证跨租户查询：租户1无法通过ID查询租户2的用户
 		user2Found, err := userRepo.FindByUsername(ctx1, "testuser2")
-		t.AssertNE(err, nil, "租户1不应该能通过用户名查询到租户2的用户")
+		t.AssertNE(err, nil)
 		t.AssertNil(user2Found)
 
 		// 验证更新操作的租户隔离
 		err = userRepo.UpdateStatus(ctx1, user2.ID, types.UserStatusSuspended)
-		t.AssertNE(err, nil, "租户1不应该能更新租户2的用户状态")
+		t.AssertNE(err, nil)
 
 		// 验证删除操作的租户隔离
 		err = userRepo.DeleteByID(ctx1, user2.ID)
-		t.AssertNE(err, nil, "租户1不应该能删除租户2的用户")
+		t.AssertNE(err, nil)
 
 		// 清理测试数据
 		userRepo.DeleteByID(ctx1, user1.ID)
@@ -114,7 +113,7 @@ func TestTenantContextMissing(t *testing.T) {
 		ctx := context.Background()
 
 		_, err = userRepo.FindAllByTenant(ctx)
-		t.AssertNE(err, nil, "没有租户上下文时应该返回错误")
+		t.AssertNE(err, nil)
 
 		user := &types.User{
 			UUID:     "test-no-tenant",
@@ -123,7 +122,7 @@ func TestTenantContextMissing(t *testing.T) {
 			Status:   types.UserStatusActive,
 		}
 		err = userRepo.Create(ctx, user)
-		t.AssertNE(err, nil, "没有租户上下文时创建用户应该失败")
+		t.AssertNE(err, nil)
 	})
 }
 
@@ -156,11 +155,11 @@ func TestRepositoryTenantValidation(t *testing.T) {
 		// 测试无效租户ID类型
 		ctx4 := context.WithValue(context.Background(), "tenant_id", []string{"invalid"})
 		_, err = baseRepo.GetTenantID(ctx4)
-		t.AssertNE(err, nil, "无效的租户ID类型应该返回错误")
+		t.AssertNE(err, nil)
 
 		// 测试缺少租户ID
 		ctx5 := context.Background()
 		_, err = baseRepo.GetTenantID(ctx5)
-		t.AssertNE(err, nil, "缺少租户ID应该返回错误")
+		t.AssertNE(err, nil)
 	})
 }

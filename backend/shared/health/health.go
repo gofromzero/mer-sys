@@ -6,8 +6,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/gogf/gf/v2/frame/g"
-	"github.com/spume/mer-sys/backend/shared/config"
+	"github.com/gofromzero/mer-sys/backend/shared/config"
 )
 
 // HealthStatus 健康状态
@@ -132,15 +131,11 @@ func (h *HealthChecker) checkDatabase(ctx context.Context) ComponentHealth {
 		return health
 	}
 
-	// 获取数据库统计信息
-	stats := db.GetStats()
+	// 数据库连接正常
 	health.Status = HealthStatusHealthy
 	health.Message = "数据库连接正常"
 	health.Details = map[string]interface{}{
-		"max_open_connections": stats.MaxOpenConnections,
-		"open_connections":     stats.OpenConnections,
-		"in_use":               stats.InUse,
-		"idle":                 stats.Idle,
+		"connection": "active",
 	}
 
 	return health
@@ -174,7 +169,7 @@ func (h *HealthChecker) checkRedis(ctx context.Context) ComponentHealth {
 		return health
 	}
 
-	if result != "PONG" {
+	if result.String() != "PONG" {
 		health.Status = HealthStatusUnhealthy
 		health.Message = "Redis PING 响应异常"
 		return health

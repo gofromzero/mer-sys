@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/gofromzero/mer-sys/backend/shared/types"
 	"github.com/gogf/gf/v2/database/gdb"
-	"github.com/spume/mer-sys/backend/shared/types"
+	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/os/gtime"
 )
 
 // UserRepository 用户仓储
@@ -198,5 +200,154 @@ func (r *UserRepository) UpdateLastLogin(ctx context.Context, id uint64) error {
 	_, err := r.Update(ctx, gdb.Map{
 		"last_login_at": "NOW()",
 	}, "id", id)
+	return err
+}
+
+// FindByUsernameAndTenant 根据用户名和租户ID查找用户
+func (r *UserRepository) FindByUsernameAndTenant(ctx context.Context, username string, tenantID uint64) (*types.User, error) {
+	// 根据用户名和租户ID查找用户
+	model, err := r.Model(ctx)
+	if err != nil {
+		return nil, err
+	}
+	
+	record, err := model.Where("username = ? AND tenant_id = ?", username, tenantID).One()
+	if err != nil {
+		return nil, err
+	}
+
+	if record.IsEmpty() {
+		return nil, fmt.Errorf("用户不存在: %s", username)
+	}
+
+	var user types.User
+	if err := record.Struct(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+// FindByEmailAndTenant 根据邮箱和租户ID查找用户
+func (r *UserRepository) FindByEmailAndTenant(ctx context.Context, email string, tenantID uint64) (*types.User, error) {
+	// 根据邮箱和租户ID查找用户
+	model, err := r.Model(ctx)
+	if err != nil {
+		return nil, err
+	}
+	
+	record, err := model.Where("email = ? AND tenant_id = ?", email, tenantID).One()
+	if err != nil {
+		return nil, err
+	}
+
+	if record.IsEmpty() {
+		return nil, fmt.Errorf("用户不存在: %s", email)
+	}
+
+	var user types.User
+	if err := record.Struct(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+// FindByIDAndTenant 根据ID和租户ID查找用户
+func (r *UserRepository) FindByIDAndTenant(ctx context.Context, userID, tenantID uint64) (*types.User, error) {
+	model, err := r.Model(ctx)
+	if err != nil {
+		return nil, err
+	}
+	record, err := model.Where("id = ? AND tenant_id = ?", userID, tenantID).One()
+	if err != nil {
+		return nil, err
+	}
+
+	if record.IsEmpty() {
+		return nil, fmt.Errorf("用户不存在: %d", userID)
+	}
+
+	var user types.User
+	if err := record.Struct(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+// UpdateLastLoginTime 更新用户最后登录时间
+func (r *UserRepository) UpdateLastLoginTime(ctx context.Context, userID uint64, loginTime *gtime.Time) error {
+	_, err := r.Update(ctx, gdb.Map{
+		"last_login_at": loginTime,
+		"updated_at":    gtime.Now(),
+	}, "id", userID)
+	return err
+}
+
+// UpdatePassword 更新用户密码
+func (r *UserRepository) UpdatePassword(ctx context.Context, userID uint64, passwordHash string) error {
+	_, err := r.Update(ctx, gdb.Map{
+		"password_hash": passwordHash,
+		"updated_at":    gtime.Now(),
+	}, "id", userID)
+	return err
+}
+
+// GetUserRoles 获取用户角色列表
+func (r *UserRepository) GetUserRoles(ctx context.Context, userID, tenantID uint64) ([]types.RoleType, error) {
+	// 从user_roles表查询用户角色
+	records, err := g.DB().Model("user_roles").
+		Where("user_id = ? AND tenant_id = ?", userID, tenantID).
+		Fields("role_type").
+		All()
+
+	if err != nil {
+		g.Log().Errorf(ctx, "查询用户角色失败: %v", err)
+		return nil, err
+	}
+
+	var roles []types.RoleType
+	for _, record := range records {
+		roleType := types.RoleType(record["role_type"].String())
+		roles = append(roles, roleType)
+	}
+
+	return roles, nil
+}
+
+// AssignRole 为用户分配角色
+func (r *UserRepository) AssignRole(ctx context.Context, userID, tenantID uint64, roleType types.RoleType) error {
+	// 检查角色是否已存在
+	exists, err := g.DB().Model("user_roles").
+		Where("user_id = ? AND tenant_id = ? AND role_type = ?", userID, tenantID, roleType).
+		Count()
+
+	if err != nil {
+		return err
+	}
+
+	if exists > 0 {
+		return fmt.Errorf("用户已拥有角色: %s", roleType)
+	}
+
+	// 插入用户角色记录
+	_, err = g.DB().Model("user_roles").Insert(gdb.Map{
+		"user_id":    userID,
+		"tenant_id":  tenantID,
+		"role_type":  roleType,
+		"created_at": gtime.Now(),
+		"updated_at": gtime.Now(),
+	})
+
+	return err
+}
+
+// RemoveRole 移除用户角色
+func (r *UserRepository) RemoveRole(ctx context.Context, userID, tenantID uint64, roleType types.RoleType) error {
+	_, err := g.DB().Model("user_roles").
+		Where("user_id = ? AND tenant_id = ? AND role_type = ?", userID, tenantID, roleType).
+		Delete()
+
 	return err
 }

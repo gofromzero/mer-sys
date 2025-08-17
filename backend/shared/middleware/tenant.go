@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gofromzero/mer-sys/backend/shared/constants"
+	"github.com/gofromzero/mer-sys/backend/shared/utils"
 	"github.com/gogf/gf/v2/net/ghttp"
-	"github.com/spume/mer-sys/backend/shared/constants"
-	"github.com/spume/mer-sys/backend/shared/utils"
 )
 
 // TenantIsolation ensures tenant data isolation

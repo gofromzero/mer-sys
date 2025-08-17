@@ -1,10 +1,10 @@
-import { render as amisRender } from 'amis'
+import { render as amisRender, type Schema } from 'amis'
 import { ToastComponent, AlertComponent } from 'amis-ui'
 import axios from 'axios'
 
 interface AmisRendererProps {
-  schema: any
-  data?: Record<string, any>
+  schema: Schema
+  data?: Record<string, unknown>
 }
 
 export const AmisRenderer: React.FC<AmisRendererProps> = ({
@@ -13,24 +13,26 @@ export const AmisRenderer: React.FC<AmisRendererProps> = ({
 }) => {
   const amisEnv = {
     // API 请求适配器
-    fetcher: async ({ url, method, data: requestData, config }: any) => {
+    fetcher: async (config: Record<string, unknown>) => {
+      const { url, method = 'GET', data: requestData, ...restConfig } = config
       try {
         const response = await axios({
-          url,
-          method,
+          url: url as string,
+          method: method as string,
           data: requestData,
-          ...config
+          ...(restConfig as Record<string, unknown>)
         })
         return {
           ok: true,
           status: response.status,
           data: response.data
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const axiosError = error as { response?: { status?: number; data?: { message?: string } }; message?: string }
         return {
           ok: false,
-          status: error.response?.status || 500,
-          msg: error.response?.data?.message || error.message
+          status: axiosError.response?.status || 500,
+          msg: axiosError.response?.data?.message || axiosError.message
         }
       }
     },
@@ -84,7 +86,8 @@ export const AmisRenderer: React.FC<AmisRendererProps> = ({
 
   return (
     <div className="amis-scope">
-      {amisRender(schema, data, amisEnv)}
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      {amisRender(schema, data, amisEnv as any)}
     </div>
   )
 }

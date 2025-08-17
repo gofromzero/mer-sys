@@ -1,13 +1,7 @@
-go 1.21
+go 1.25.0
 
 use (
-	./gateway
-	./services/fund-service
-	./services/merchant-service
-	./services/order-service
-	./services/product-service
-	./services/report-service
-	./services/tenant-service
-	./services/user-service
+	
 	./shared
+	./services/user-service
 )

@@ -3,7 +3,7 @@ export * from './tenant';
 
 import type { User } from './user';
 
-export interface APIResponse<T = any> {
+export interface APIResponse<T = unknown> {
   code: number;
   message: string;
   data?: T;

@@ -1,0 +1,37 @@
+# 数据库配置
+database:
+  default:
+    host:     "127.0.0.1"
+    port:     "3306"
+    user:     "root"
+    pass:     "123456"
+    name:     "mer_system"
+    type:     "mysql"
+    role:     "master"
+    debug:    true
+    charset:  "utf8mb4"
+    timezone: "Local"
+
+# Redis配置
+redis:
+  default:
+    address: "127.0.0.1:6379"
+    db:      0
+    pass:    ""
+
+# 服务器配置
+server:
+  name:       "mer-system"
+  address:    ":8080"
+  serverRoot: "resource"
+  dumpRouterMap: true
+  
+# 日志配置
+logger:
+  level:  "debug"
+  stdout: true
+
+# JWT配置
+jwt:
+  secret: "mer-system-jwt-secret"
+  expire: 24 # 小时
