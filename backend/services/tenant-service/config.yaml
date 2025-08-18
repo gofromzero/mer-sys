@@ -1,0 +1,17 @@
+server:
+  address: ":8081"
+  serverRoot: "resource"
+
+logger:
+  level: "all"
+  stdout: true
+
+database:
+  default:
+    link: "mysql:mer_user:mer_password@tcp(127.0.0.1:3306)/mer_system"
+    debug: true
+
+redis:
+  default:
+    address: "127.0.0.1:6379"
+    db: 0

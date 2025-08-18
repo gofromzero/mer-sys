@@ -2,5 +2,6 @@ go 1.25.0
 
 use (
 	./services/user-service
+	./services/tenant-service
 	./shared
 )
