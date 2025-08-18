@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import type { LoginRequest } from '../services/authService';
 
@@ -63,26 +63,21 @@ export const useAuth = () => {
 
   // 登录方法的包装
   const handleLogin = async (credentials: LoginRequest): Promise<void> => {
-    try {
-      await login(credentials);
-    } catch (error) {
-      // 错误已经在store中处理，这里可以添加额外的错误处理逻辑
-      throw error;
-    }
+    await login(credentials);
   };
 
   // 登出方法的包装
-  const handleLogout = async (): Promise<void> => {
+  const handleLogout = useCallback(async (): Promise<void> => {
     try {
       await logout();
     } catch (error) {
       console.error('登出失败:', error);
       // 即使登出失败也要清除本地状态（store中已处理）
     }
-  };
+  }, [logout]);
 
   // 自动刷新令牌
-  const autoRefreshToken = async (): Promise<boolean> => {
+  const autoRefreshToken = useCallback(async (): Promise<boolean> => {
     if (!refreshToken) {
       return false;
     }
@@ -93,10 +88,10 @@ export const useAuth = () => {
       console.error('自动刷新令牌失败:', error);
       return false;
     }
-  };
+  }, [refreshToken, refreshAccessToken]);
 
   // 初始化认证状态
-  const initializeAuth = async (): Promise<void> => {
+  const initializeAuth = useCallback(async (): Promise<void> => {
     if (token) {
       // 验证现有令牌
       const isValid = await validateToken();
@@ -109,12 +104,12 @@ export const useAuth = () => {
         }
       }
     }
-  };
+  }, [token, validateToken, autoRefreshToken, handleLogout]);
 
   // 组件挂载时初始化认证状态
   useEffect(() => {
     initializeAuth();
-  }, []);
+  }, [initializeAuth]);
 
   // 定期检查令牌有效性（可选）
   useEffect(() => {
@@ -131,7 +126,7 @@ export const useAuth = () => {
     }, 30 * 60 * 1000); // 30分钟
 
     return () => clearInterval(interval);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, validateToken, autoRefreshToken]);
 
   return {
     // 状态

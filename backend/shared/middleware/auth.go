@@ -141,6 +141,10 @@ func (am *AuthMiddleware) JWTAuth(r *ghttp.Request) {
 	ctx = context.WithValue(ctx, "permissions", claims.Permissions)
 	ctx = context.WithValue(ctx, "token", token)
 	ctx = context.WithValue(ctx, "token_type", claims.TokenType)
+	
+	// 添加客户端信息用于审计
+	ctx = context.WithValue(ctx, "client_ip", r.GetClientIp())
+	ctx = context.WithValue(ctx, "user_agent", r.Header.Get("User-Agent"))
 
 	// 更新请求上下文
 	r.SetCtx(ctx)

@@ -6,6 +6,9 @@ import (
 	
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/frame/g"
+	
+	// 导入MySQL驱动
+	_ "github.com/gogf/gf/contrib/drivers/mysql/v2"
 )
 
 // DatabaseConfig 数据库配置

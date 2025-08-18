@@ -8,6 +8,7 @@ import (
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/util/gconv"
+	"github.com/gofromzero/mer-sys/backend/shared/audit"
 )
 
 // BaseRepository 基础仓储类，提供多租户隔离支持
@@ -59,8 +60,17 @@ func (r *BaseRepository) GetTenantID(ctx context.Context) (uint64, error) {
 func (r *BaseRepository) Model(ctx context.Context) (*gdb.Model, error) {
 	tenantID, err := r.GetTenantID(ctx)
 	if err != nil {
+		// 记录无效的租户访问尝试
+		audit.LogSecurityViolation(ctx, 0, "invalid_tenant_context", 
+			"尝试在无效租户上下文中访问数据", map[string]interface{}{
+				"table": r.tableName,
+				"error": err.Error(),
+			})
 		return nil, err
 	}
+	
+	// 记录正常的租户数据访问
+	audit.LogTenantAccess(ctx, tenantID, r.tableName, "query", nil)
 	
 	return r.db.Model(r.tableName).Where("tenant_id", tenantID), nil
 }

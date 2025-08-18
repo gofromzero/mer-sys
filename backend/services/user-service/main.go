@@ -6,6 +6,9 @@ import (
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
 	"github.com/gogf/gf/v2/os/gctx"
+	
+	// 导入MySQL驱动
+	_ "github.com/gogf/gf/contrib/drivers/mysql/v2"
 )
 
 func main() {

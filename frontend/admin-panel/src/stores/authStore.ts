@@ -89,10 +89,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           error: null
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { message?: string };
       set({ 
         isLoading: false, 
-        error: error.message || '登录失败' 
+        error: err.message || '登录失败' 
       });
       throw error;
     }

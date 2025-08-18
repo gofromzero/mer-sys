@@ -22,6 +22,11 @@ func NewUserRepository() *UserRepository {
 	}
 }
 
+// GetByID 根据ID查找用户（自动添加租户隔离）- 兼容性别名
+func (r *UserRepository) GetByID(ctx context.Context, id uint64) (*types.User, error) {
+	return r.FindByID(ctx, id)
+}
+
 // FindByID 根据ID查找用户（自动添加租户隔离）
 func (r *UserRepository) FindByID(ctx context.Context, id uint64) (*types.User, error) {
 	record, err := r.FindOne(ctx, "id", id)

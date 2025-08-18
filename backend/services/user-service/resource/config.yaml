@@ -1,0 +1,28 @@
+server:
+  address: ":8081"
+  name: user-service
+
+logger:
+  level: "all"
+  stdout: true
+
+database:
+  default:
+    host: "127.0.0.1"
+    port: "3306"
+    user: "mer_user"
+    pass: "mer_password"
+    name: "mer_system"
+    type: "mysql"
+    charset: "utf8mb4"
+    debug: true
+
+redis:
+  default:
+    address: "127.0.0.1:6379"
+    db: 0
+
+jwt:
+  secret: "mer-system-jwt-secret-key-2024"
+  expire: 7200
+  refresh_expire: 604800

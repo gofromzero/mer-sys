@@ -39,9 +39,10 @@ export const authService = {
     try {
       const response = await apiClient.post<APIResponse<LoginResponse>>('/auth/login', credentials);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 统一错误处理
-      throw new Error(error.response?.data?.message || '登录失败，请检查用户名和密码');
+      const err = error as { response?: { data?: { message?: string } } };
+      throw new Error(err.response?.data?.message || '登录失败，请检查用户名和密码');
     }
   },
 
@@ -53,10 +54,11 @@ export const authService = {
     try {
       const response = await apiClient.post<APIResponse>('/auth/logout');
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 即使登出失败也要清除本地存储
-      console.warn('登出请求失败:', error.response?.data?.message);
-      throw new Error(error.response?.data?.message || '登出失败');
+      const err = error as { response?: { data?: { message?: string } } };
+      console.warn('登出请求失败:', err.response?.data?.message);
+      throw new Error(err.response?.data?.message || '登出失败');
     }
   },
 
@@ -71,8 +73,9 @@ export const authService = {
         refresh_token: refreshToken
       });
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || '令牌刷新失败');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      throw new Error(err.response?.data?.message || '令牌刷新失败');
     }
   },
 
@@ -84,8 +87,9 @@ export const authService = {
     try {
       const response = await apiClient.get<APIResponse<{ user: User; permissions: string[] }>>('/auth/me');
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || '令牌验证失败');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      throw new Error(err.response?.data?.message || '令牌验证失败');
     }
   }
 };

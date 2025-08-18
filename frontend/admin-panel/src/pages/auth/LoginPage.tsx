@@ -19,7 +19,7 @@ export const LoginPage: React.FC = () => {
   const { login, isLoading, error, clearError, isAuthenticated } = useAuth();
   
   // 获取重定向路径
-  const from = (location.state as any)?.from?.pathname || '/dashboard';
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
   
   // 如果已经登录，重定向到目标页面
   useEffect(() => {
