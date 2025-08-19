@@ -116,4 +116,110 @@ export const tenantService = {
   async updateTenantConfig(id: number, config: TenantConfig): Promise<void> {
     await apiClient.put(`/tenants/${id}/config`, config);
   },
+
+  /**
+   * 获取配置变更通知
+   */
+  async getConfigChangeNotification(id: number): Promise<unknown> {
+    const response = await apiClient.get(`/tenants/${id}/config/notifications`);
+    return response.data;
+  },
+
+  /**
+   * 批量获取租户信息
+   */
+  async batchGetTenants(ids: number[]): Promise<Tenant[]> {
+    const promises = ids.map(id => this.getTenant(id));
+    return Promise.all(promises);
+  },
+
+  /**
+   * 搜索租户
+   */
+  async searchTenants(keyword: string, filters?: {
+    status?: string;
+    business_type?: string;
+  }): Promise<ListTenantsResponse> {
+    return this.listTenants({
+      search: keyword,
+      ...filters,
+      page: 1,
+      page_size: 50
+    });
+  },
+
+  /**
+   * 获取租户统计信息
+   */
+  async getTenantStats(): Promise<{
+    total: number;
+    active: number;
+    suspended: number;
+    expired: number;
+    by_business_type: Record<string, number>;
+  }> {
+    // 获取所有租户进行统计
+    const allTenants = await this.listTenants({ page_size: 1000 });
+    
+    const stats = {
+      total: allTenants.total,
+      active: 0,
+      suspended: 0,
+      expired: 0,
+      by_business_type: {} as Record<string, number>
+    };
+
+    allTenants.tenants.forEach(tenant => {
+      // 统计状态
+      switch (tenant.status) {
+        case 'active':
+          stats.active++;
+          break;
+        case 'suspended':
+          stats.suspended++;
+          break;
+        case 'expired':
+          stats.expired++;
+          break;
+      }
+
+      // 统计业务类型
+      if (tenant.business_type) {
+        stats.by_business_type[tenant.business_type] = 
+          (stats.by_business_type[tenant.business_type] || 0) + 1;
+      }
+    });
+
+    return stats;
+  },
+
+  /**
+   * 验证租户代码是否可用
+   */
+  async checkTenantCodeAvailability(code: string): Promise<boolean> {
+    try {
+      // 通过代码搜索租户
+      const result = await this.searchTenants(code);
+      // 如果找到匹配的租户，说明代码已被使用
+      return result.tenants.length === 0;
+    } catch {
+      // 如果搜索失败，说明代码可用
+      return true;
+    }
+  },
+
+  /**
+   * 验证联系邮箱是否可用
+   */
+  async checkEmailAvailability(email: string): Promise<boolean> {
+    try {
+      // 通过邮箱搜索租户
+      const result = await this.searchTenants(email);
+      // 如果找到匹配的租户，说明邮箱已被使用
+      return result.tenants.length === 0;
+    } catch {
+      // 如果搜索失败，说明邮箱可用
+      return true;
+    }
+  },
 };

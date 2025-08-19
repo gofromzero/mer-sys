@@ -3,6 +3,7 @@ import { MainLayout } from '../components/layouts/MainLayout';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import TenantListPage from '../pages/tenant/TenantListPage';
+import TenantRegistrationPage from '../pages/tenant/TenantRegistrationPage';
 
 export const router = createBrowserRouter([
   {
@@ -23,7 +24,20 @@ export const router = createBrowserRouter([
       },
       {
         path: 'tenant',
-        element: <TenantListPage />,
+        children: [
+          {
+            index: true,
+            element: <TenantListPage />,
+          },
+          {
+            path: 'list',
+            element: <TenantListPage />,
+          },
+          {
+            path: 'register',
+            element: <TenantRegistrationPage />,
+          },
+        ],
       },
     ],
   },

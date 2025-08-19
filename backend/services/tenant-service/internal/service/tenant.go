@@ -7,6 +7,7 @@ import (
 
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gtime"
+	"github.com/gofromzero/mer-sys/backend/shared/audit"
 	"github.com/gofromzero/mer-sys/backend/shared/repository"
 	"github.com/gofromzero/mer-sys/backend/shared/types"
 )
@@ -19,15 +20,18 @@ type ITenantService interface {
 	UpdateTenantStatus(ctx context.Context, id uint64, req *types.UpdateTenantStatusRequest) error
 	GetTenantConfig(ctx context.Context, id uint64) (*types.TenantConfig, error)
 	UpdateTenantConfig(ctx context.Context, id uint64, config *types.TenantConfig) error
+	GetConfigChangeNotification(ctx context.Context, id uint64) (map[string]interface{}, error)
 }
 
 type tenantService struct {
-	tenantRepo repository.ITenantRepository
+	tenantRepo    repository.ITenantRepository
+	configCache   *TenantConfigCache
 }
 
 func NewTenantService() ITenantService {
 	return &tenantService{
-		tenantRepo: repository.NewTenantRepository(),
+		tenantRepo:  repository.NewTenantRepository(),
+		configCache: NewTenantConfigCache(),
 	}
 }
 
@@ -73,6 +77,14 @@ func (s *tenantService) CreateTenant(ctx context.Context, req *types.CreateTenan
 	if err != nil {
 		return nil, err
 	}
+
+	// 记录租户创建审计日志
+	audit.LogTenantAccess(ctx, id, "tenant", "create", map[string]interface{}{
+		"tenant_name": tenant.Name,
+		"tenant_code": tenant.Code,
+		"business_type": tenant.BusinessType,
+		"contact_email": tenant.ContactEmail,
+	})
 
 	// 返回创建的租户信息
 	tenant.ID = id
@@ -202,6 +214,14 @@ func (s *tenantService) UpdateTenantStatus(ctx context.Context, id uint64, req *
 	}
 
 	// 记录状态变更审计日志
+	audit.LogTenantAccess(ctx, id, "tenant", "status_change", map[string]interface{}{
+		"old_status": string(oldStatus),
+		"new_status": string(req.Status),
+		"reason": req.Reason,
+		"tenant_name": tenant.Name,
+		"tenant_code": tenant.Code,
+	})
+
 	g.Log().Infof(ctx, "Tenant status changed: tenant_id=%d, old_status=%s, new_status=%s, reason=%s", 
 		id, oldStatus, req.Status, req.Reason)
 
@@ -209,6 +229,13 @@ func (s *tenantService) UpdateTenantStatus(ctx context.Context, id uint64, req *
 }
 
 func (s *tenantService) GetTenantConfig(ctx context.Context, id uint64) (*types.TenantConfig, error) {
+	// 首先尝试从缓存获取
+	config, err := s.configCache.GetConfig(ctx, id)
+	if err == nil && config != nil {
+		return config, nil
+	}
+
+	// 缓存未命中，从数据库获取
 	tenant, err := s.tenantRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -217,15 +244,18 @@ func (s *tenantService) GetTenantConfig(ctx context.Context, id uint64) (*types.
 		return nil, errors.New("租户不存在")
 	}
 
-	var config types.TenantConfig
+	var tenantConfig types.TenantConfig
 	if tenant.Config != "" {
-		err = json.Unmarshal([]byte(tenant.Config), &config)
+		err = json.Unmarshal([]byte(tenant.Config), &tenantConfig)
 		if err != nil {
 			return nil, errors.New("租户配置格式错误")
 		}
 	}
 
-	return &config, nil
+	// 将配置写入缓存
+	s.configCache.SetConfig(ctx, id, &tenantConfig)
+
+	return &tenantConfig, nil
 }
 
 func (s *tenantService) UpdateTenantConfig(ctx context.Context, id uint64, config *types.TenantConfig) error {
@@ -254,10 +284,33 @@ func (s *tenantService) UpdateTenantConfig(ctx context.Context, id uint64, confi
 		return err
 	}
 
+	// 使配置缓存失效
+	s.configCache.InvalidateConfig(ctx, id)
+
+	// 设置配置变更通知
+	changeInfo := map[string]interface{}{
+		"tenant_id":   id,
+		"tenant_name": tenant.Name,
+		"tenant_code": tenant.Code,
+		"changed_at":  tenant.UpdatedAt.Format("2006-01-02 15:04:05"),
+		"new_config":  config,
+	}
+	s.configCache.SetConfigChangeNotification(ctx, id, changeInfo)
+
 	// 记录配置变更审计日志
+	audit.LogTenantAccess(ctx, id, "tenant", "config_update", map[string]interface{}{
+		"tenant_name": tenant.Name,
+		"tenant_code": tenant.Code,
+		"new_config":  config,
+	})
+
 	g.Log().Infof(ctx, "Tenant config updated: tenant_id=%d", id)
 
 	return nil
+}
+
+func (s *tenantService) GetConfigChangeNotification(ctx context.Context, id uint64) (map[string]interface{}, error) {
+	return s.configCache.GetConfigChangeNotification(ctx, id)
 }
 
 func (s *tenantService) convertToResponse(tenant *types.Tenant) *types.TenantResponse {

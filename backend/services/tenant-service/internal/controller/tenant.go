@@ -11,11 +11,14 @@ import (
 
 type TenantController struct {
 	tenantService service.ITenantService
+	securityService *service.TenantSecurityService
 }
 
 func NewTenantController() *TenantController {
+	tenantService := service.NewTenantService()
 	return &TenantController{
-		tenantService: service.NewTenantService(),
+		tenantService:   tenantService,
+		securityService: service.NewTenantSecurityService(tenantService),
 	}
 }
 
@@ -185,6 +188,39 @@ func (c *TenantController) UpdateStatus(r *ghttp.Request) {
 		return
 	}
 
+	// 获取当前租户状态进行安全验证
+	currentTenant, err := c.tenantService.GetTenantByID(r.Context(), id)
+	if err != nil {
+		r.Response.WriteJsonExit(g.Map{
+			"code":    500,
+			"message": "获取租户信息失败",
+			"data":    nil,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if currentTenant == nil {
+		r.Response.WriteJsonExit(g.Map{
+			"code":    404,
+			"message": "租户不存在",
+			"data":    nil,
+		})
+		return
+	}
+
+	// 安全验证：状态变更权限
+	if err := c.securityService.ValidateTenantStatusChange(r.Context(), id, 
+		types.TenantStatus(currentTenant.Status), req.Status, req.Reason); err != nil {
+		r.Response.WriteJsonExit(g.Map{
+			"code":    403,
+			"message": "权限验证失败",
+			"data":    nil,
+			"error":   err.Error(),
+		})
+		return
+	}
+
 	err = c.tenantService.UpdateTenantStatus(r.Context(), id, req)
 	if err != nil {
 		r.Response.WriteJsonExit(g.Map{
@@ -258,6 +294,29 @@ func (c *TenantController) UpdateConfig(r *ghttp.Request) {
 		return
 	}
 
+	// 获取当前配置进行安全验证
+	currentConfig, err := c.tenantService.GetTenantConfig(r.Context(), id)
+	if err != nil {
+		r.Response.WriteJsonExit(g.Map{
+			"code":    500,
+			"message": "获取当前租户配置失败",
+			"data":    nil,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// 安全验证：配置变更权限
+	if err := c.securityService.ValidateTenantConfigChange(r.Context(), id, currentConfig, config); err != nil {
+		r.Response.WriteJsonExit(g.Map{
+			"code":    403,
+			"message": "权限验证失败",
+			"data":    nil,
+			"error":   err.Error(),
+		})
+		return
+	}
+
 	err = c.tenantService.UpdateTenantConfig(r.Context(), id, config)
 	if err != nil {
 		r.Response.WriteJsonExit(g.Map{
@@ -273,5 +332,35 @@ func (c *TenantController) UpdateConfig(r *ghttp.Request) {
 		"code":    0,
 		"message": "更新租户配置成功",
 		"data":    nil,
+	})
+}
+
+// GetConfigNotification handles GET /api/v1/tenants/{id}/config/notifications - 获取配置变更通知
+func (c *TenantController) GetConfigNotification(r *ghttp.Request) {
+	idStr := r.Get("id").String()
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		r.Response.WriteJsonExit(g.Map{
+			"code":    400,
+			"message": "租户ID格式错误",
+			"data":    nil,
+		})
+		return
+	}
+
+	notification, err := c.tenantService.GetConfigChangeNotification(r.Context(), id)
+	if err != nil {
+		r.Response.WriteJsonExit(g.Map{
+			"code":    404,
+			"message": "暂无配置变更通知",
+			"data":    nil,
+		})
+		return
+	}
+
+	r.Response.WriteJsonExit(g.Map{
+		"code":    0,
+		"message": "获取配置变更通知成功",
+		"data":    notification,
 	})
 }

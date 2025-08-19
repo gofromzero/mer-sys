@@ -28,18 +28,51 @@ func main() {
 
 		// 需要认证的路由
 		group.Group("/", func(authGroup *ghttp.RouterGroup) {
-			// TODO: 添加认证中间件
-			// authGroup.Middleware(middleware.NewAuthMiddleware().RequirePermissions())
+			// 基础认证中间件
+			authGroup.Middleware(middleware.NewAuthMiddleware())
 
 			// 租户相关路由
 			tenantController := controller.NewTenantController()
-			authGroup.POST("/tenants", tenantController.Create)
-			authGroup.GET("/tenants", tenantController.List)
-			authGroup.GET("/tenants/:id", tenantController.GetByID)
-			authGroup.PUT("/tenants/:id", tenantController.Update)
-			authGroup.PUT("/tenants/:id/status", tenantController.UpdateStatus)
-			authGroup.GET("/tenants/:id/config", tenantController.GetConfig)
-			authGroup.PUT("/tenants/:id/config", tenantController.UpdateConfig)
+			
+			// 创建租户 - 需要创建权限
+			authGroup.POST("/tenants", 
+				middleware.NewAuthMiddleware().RequirePermissions("tenant:create"),
+				tenantController.Create)
+			
+			// 查看租户列表 - 需要查看权限
+			authGroup.GET("/tenants", 
+				middleware.NewAuthMiddleware().RequirePermissions("tenant:view"),
+				tenantController.List)
+			
+			// 查看租户详情 - 需要查看权限
+			authGroup.GET("/tenants/:id", 
+				middleware.NewAuthMiddleware().RequirePermissions("tenant:view"),
+				tenantController.GetByID)
+			
+			// 更新租户信息 - 需要更新权限
+			authGroup.PUT("/tenants/:id", 
+				middleware.NewAuthMiddleware().RequirePermissions("tenant:update"),
+				tenantController.Update)
+			
+			// 更新租户状态 - 需要管理权限（敏感操作）
+			authGroup.PUT("/tenants/:id/status", 
+				middleware.NewAuthMiddleware().RequirePermissions("tenant:manage"),
+				tenantController.UpdateStatus)
+			
+			// 查看租户配置 - 需要查看权限
+			authGroup.GET("/tenants/:id/config", 
+				middleware.NewAuthMiddleware().RequirePermissions("tenant:view"),
+				tenantController.GetConfig)
+			
+			// 更新租户配置 - 需要管理权限（敏感操作）
+			authGroup.PUT("/tenants/:id/config", 
+				middleware.NewAuthMiddleware().RequirePermissions("tenant:manage"),
+				tenantController.UpdateConfig)
+			
+			// 获取配置变更通知 - 需要查看权限
+			authGroup.GET("/tenants/:id/config/notifications", 
+				middleware.NewAuthMiddleware().RequirePermissions("tenant:view"),
+				tenantController.GetConfigNotification)
 		})
 	})
 
