@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { renderWithRouter, screen } from './utils/testUtils';
 import { MerchantRegistrationPage } from '../pages/merchant/MerchantRegistrationPage';
 import '@testing-library/jest-dom';
 
@@ -43,7 +43,7 @@ describe('MerchantRegistrationPage', () => {
   });
 
   it('应该正确渲染商户注册页面', () => {
-    render(<MerchantRegistrationPage />);
+    renderWithRouter(<MerchantRegistrationPage />);
 
     // 检查页面是否正确渲染
     expect(screen.getByTestId('amis-renderer')).toBeInTheDocument();
@@ -59,7 +59,7 @@ describe('MerchantRegistrationPage', () => {
   });
 
   it('应该包含所有必需的表单字段', () => {
-    render(<MerchantRegistrationPage />);
+    renderWithRouter(<MerchantRegistrationPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');
@@ -90,7 +90,7 @@ describe('MerchantRegistrationPage', () => {
   });
 
   it('应该正确设置必填字段', () => {
-    render(<MerchantRegistrationPage />);
+    renderWithRouter(<MerchantRegistrationPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');
@@ -122,7 +122,7 @@ describe('MerchantRegistrationPage', () => {
   });
 
   it('应该包含表单验证规则', () => {
-    render(<MerchantRegistrationPage />);
+    renderWithRouter(<MerchantRegistrationPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');
@@ -151,7 +151,7 @@ describe('MerchantRegistrationPage', () => {
   });
 
   it('应该包含商户类型选项', () => {
-    render(<MerchantRegistrationPage />);
+    renderWithRouter(<MerchantRegistrationPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');
@@ -168,7 +168,7 @@ describe('MerchantRegistrationPage', () => {
   });
 
   it('应该包含正确的表单操作按钮', () => {
-    render(<MerchantRegistrationPage />);
+    renderWithRouter(<MerchantRegistrationPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');
@@ -187,7 +187,7 @@ describe('MerchantRegistrationPage', () => {
   });
 
   it('应该有正确的分割线标题', () => {
-    render(<MerchantRegistrationPage />);
+    renderWithRouter(<MerchantRegistrationPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');
@@ -202,7 +202,7 @@ describe('MerchantRegistrationPage', () => {
   });
 
   it('应该配置正确的提交API', () => {
-    render(<MerchantRegistrationPage />);
+    renderWithRouter(<MerchantRegistrationPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');
@@ -213,7 +213,7 @@ describe('MerchantRegistrationPage', () => {
   });
 
   it('应该有适当的表单配置', () => {
-    render(<MerchantRegistrationPage />);
+    renderWithRouter(<MerchantRegistrationPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');

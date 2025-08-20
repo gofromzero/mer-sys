@@ -118,15 +118,16 @@ func (c *AuthController) Login(r *ghttp.Request) {
 
 	// 构建用户信息（不包含敏感信息）
 	userInfo := &types.UserInfo{
-		ID:       user.ID,
-		UUID:     user.UUID,
-		Username: user.Username,
-		Email:    user.Email,
-		Phone:    user.Phone,
-		Status:   user.Status,
-		TenantID: user.TenantID,
-		Roles:    userPermissions.Roles,
-		Profile:  user.Profile,
+		ID:         user.ID,
+		UUID:       user.UUID,
+		Username:   user.Username,
+		Email:      user.Email,
+		Phone:      user.Phone,
+		Status:     user.Status,
+		TenantID:   user.TenantID,
+		MerchantID: user.MerchantID, // 包含商户ID
+		Roles:      userPermissions.Roles,
+		Profile:    user.Profile,
 	}
 
 	// 计算访问令牌过期时间（24小时）
@@ -309,15 +310,16 @@ func (c *AuthController) GetUserInfo(r *ghttp.Request) {
 
 	// 构建响应数据（不包含敏感信息）
 	userInfo := &types.UserInfo{
-		ID:       user.ID,
-		UUID:     user.UUID,
-		Username: user.Username,
-		Email:    user.Email,
-		Phone:    user.Phone,
-		Status:   user.Status,
-		TenantID: user.TenantID,
-		Roles:    claims.Roles,
-		Profile:  user.Profile,
+		ID:         user.ID,
+		UUID:       user.UUID,
+		Username:   user.Username,
+		Email:      user.Email,
+		Phone:      user.Phone,
+		Status:     user.Status,
+		TenantID:   user.TenantID,
+		MerchantID: user.MerchantID, // 包含商户ID
+		Roles:      claims.Roles,
+		Profile:    user.Profile,
 	}
 
 	r.Response.WriteJsonExit(g.Map{

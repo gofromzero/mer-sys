@@ -1,6 +1,7 @@
 go 1.25.0
 
 use (
+	./services/fund-service
 	./services/merchant-service
 	./services/tenant-service
 	./services/user-service

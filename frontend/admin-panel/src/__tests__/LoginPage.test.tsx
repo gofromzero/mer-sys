@@ -1,6 +1,5 @@
 // React import not needed with new JSX transform
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { renderWithRouter, screen, fireEvent, waitFor } from './utils/testUtils';
 import '@testing-library/jest-dom';
 import { LoginPage } from '../pages/auth/LoginPage';
 
@@ -26,11 +25,7 @@ jest.mock('react-router-dom', () => ({
 }));
 
 const renderLoginPage = () => {
-  return render(
-    <BrowserRouter>
-      <LoginPage />
-    </BrowserRouter>
-  );
+  return renderWithRouter(<LoginPage />);
 };
 
 describe('LoginPage', () => {

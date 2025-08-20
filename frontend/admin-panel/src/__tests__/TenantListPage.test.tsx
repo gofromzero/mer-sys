@@ -1,5 +1,4 @@
-import { render, screen, cleanup } from '@testing-library/react'
-import { BrowserRouter } from 'react-router-dom'
+import { renderWithRouter, screen, cleanup } from './utils/testUtils'
 import TenantListPage from '../pages/tenant/TenantListPage'
 import { tenantService } from '../services/tenantService'
 
@@ -55,13 +54,6 @@ jest.mock('../components/ui/AmisRenderer', () => {
   }
 })
 
-const renderWithRouter = (component: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {component}
-    </BrowserRouter>
-  )
-}
 
 describe('TenantListPage', () => {
   beforeEach(() => {

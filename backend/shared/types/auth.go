@@ -8,6 +8,10 @@ const (
 	RoleTenantAdmin RoleType = "tenant_admin"
 	// RoleMerchant 商户
 	RoleMerchant RoleType = "merchant"
+	// RoleMerchantAdmin 商户管理员
+	RoleMerchantAdmin RoleType = "merchant_admin"
+	// RoleMerchantOperator 商户操作员
+	RoleMerchantOperator RoleType = "merchant_operator"
 	// RoleCustomer 客户
 	RoleCustomer RoleType = "customer"
 )
@@ -79,6 +83,25 @@ const (
 	PermissionRoleView   Permission = "role:view"
 	PermissionRoleManage Permission = "role:manage"
 	PermissionRoleAssign Permission = "role:assign"
+
+	// 商户级别权限 - 商品管理权限
+	PermissionMerchantProductView   Permission = "merchant:product:view"
+	PermissionMerchantProductCreate Permission = "merchant:product:create"
+	PermissionMerchantProductEdit   Permission = "merchant:product:edit"
+	PermissionMerchantProductDelete Permission = "merchant:product:delete"
+
+	// 商户级别权限 - 订单管理权限
+	PermissionMerchantOrderView    Permission = "merchant:order:view"
+	PermissionMerchantOrderProcess Permission = "merchant:order:process"
+	PermissionMerchantOrderCancel  Permission = "merchant:order:cancel"
+
+	// 商户级别权限 - 用户管理权限
+	PermissionMerchantUserView   Permission = "merchant:user:view"
+	PermissionMerchantUserManage Permission = "merchant:user:manage"
+
+	// 商户级别权限 - 报表权限
+	PermissionMerchantReportView   Permission = "merchant:report:view"
+	PermissionMerchantReportExport Permission = "merchant:report:export"
 )
 
 // Role 角色定义
@@ -136,6 +159,34 @@ func GetDefaultRoles() map[RoleType]Role {
 				PermissionBenefitView,
 			},
 		},
+		RoleMerchantAdmin: {
+			Type:        RoleMerchantAdmin,
+			Name:        "商户管理员",
+			Description: "管理商户内所有权限，包括用户管理",
+			Permissions: []Permission{
+				// 商户级商品管理
+				PermissionMerchantProductView, PermissionMerchantProductCreate, PermissionMerchantProductEdit, PermissionMerchantProductDelete,
+				// 商户级订单管理
+				PermissionMerchantOrderView, PermissionMerchantOrderProcess, PermissionMerchantOrderCancel,
+				// 商户级用户管理
+				PermissionMerchantUserView, PermissionMerchantUserManage,
+				// 商户级报表权限
+				PermissionMerchantReportView, PermissionMerchantReportExport,
+			},
+		},
+		RoleMerchantOperator: {
+			Type:        RoleMerchantOperator,
+			Name:        "商户操作员",
+			Description: "商户日常运营权限，不包括用户管理",
+			Permissions: []Permission{
+				// 商户级商品管理（不包括删除）
+				PermissionMerchantProductView, PermissionMerchantProductCreate, PermissionMerchantProductEdit,
+				// 商户级订单管理
+				PermissionMerchantOrderView, PermissionMerchantOrderProcess,
+				// 商户级报表查看
+				PermissionMerchantReportView,
+			},
+		},
 		RoleCustomer: {
 			Type:        RoleCustomer,
 			Name:        "客户",
@@ -162,6 +213,7 @@ func (r Role) HasPermission(permission Permission) bool {
 type UserPermissions struct {
 	UserID      uint64       `json:"user_id"`
 	TenantID    uint64       `json:"tenant_id"`
+	MerchantID  *uint64      `json:"merchant_id,omitempty"`
 	Roles       []RoleType   `json:"roles"`
 	Permissions []Permission `json:"permissions"`
 }

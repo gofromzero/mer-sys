@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { renderWithRouter, screen } from './utils/testUtils';
 import { MerchantListPage } from '../pages/merchant/MerchantListPage';
 import { MerchantService } from '../services/merchantService';
 import { MerchantStatus } from '../types/merchant';
@@ -79,7 +79,7 @@ describe('MerchantListPage', () => {
       page_size: 20
     });
 
-    render(<MerchantListPage />);
+    renderWithRouter(<MerchantListPage />);
 
     // 检查页面是否正确渲染
     expect(screen.getByTestId('amis-renderer')).toBeInTheDocument();
@@ -95,7 +95,7 @@ describe('MerchantListPage', () => {
   });
 
   it('应该包含正确的表格列配置', () => {
-    render(<MerchantListPage />);
+    renderWithRouter(<MerchantListPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');
@@ -111,7 +111,7 @@ describe('MerchantListPage', () => {
   });
 
   it('应该包含正确的操作按钮', () => {
-    render(<MerchantListPage />);
+    renderWithRouter(<MerchantListPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');
@@ -127,7 +127,7 @@ describe('MerchantListPage', () => {
   });
 
   it('应该包含搜索和筛选功能', () => {
-    render(<MerchantListPage />);
+    renderWithRouter(<MerchantListPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');
@@ -143,7 +143,7 @@ describe('MerchantListPage', () => {
   });
 
   it('应该包含新增商户按钮', () => {
-    render(<MerchantListPage />);
+    renderWithRouter(<MerchantListPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');
@@ -156,7 +156,7 @@ describe('MerchantListPage', () => {
   });
 
   it('审批按钮应该只在待审核状态显示', () => {
-    render(<MerchantListPage />);
+    renderWithRouter(<MerchantListPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');
@@ -167,7 +167,7 @@ describe('MerchantListPage', () => {
   });
 
   it('状态管理按钮应该只在激活或暂停状态显示', () => {
-    render(<MerchantListPage />);
+    renderWithRouter(<MerchantListPage />);
     
     const schemaElement = screen.getByTestId('amis-schema');
     const schema = JSON.parse(schemaElement.textContent || '{}');

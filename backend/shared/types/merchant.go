@@ -32,13 +32,21 @@ type BusinessInfo struct {
 
 // RightsBalance 权益余额信息
 type RightsBalance struct {
-	TotalBalance  float64 `json:"total_balance"`  // 总余额
-	UsedBalance   float64 `json:"used_balance"`   // 已使用余额
-	FrozenBalance float64 `json:"frozen_balance"` // 冻结余额
+	TotalBalance     float64   `json:"total_balance"`     // 总余额
+	UsedBalance      float64   `json:"used_balance"`      // 已使用余额
+	FrozenBalance    float64   `json:"frozen_balance"`    // 冻结余额
+	AvailableBalance float64   `json:"available_balance"` // 可用余额
+	LastUpdated      time.Time `json:"last_updated"`      // 最后更新时间
 }
 
-// AvailableBalance 计算可用余额
-func (rb *RightsBalance) AvailableBalance() float64 {
+// UpdateAvailableBalance 更新可用余额
+func (rb *RightsBalance) UpdateAvailableBalance() {
+	rb.AvailableBalance = rb.TotalBalance - rb.UsedBalance - rb.FrozenBalance
+	rb.LastUpdated = time.Now()
+}
+
+// GetAvailableBalance 获取计算后的可用余额
+func (rb *RightsBalance) GetAvailableBalance() float64 {
 	return rb.TotalBalance - rb.UsedBalance - rb.FrozenBalance
 }
 

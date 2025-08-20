@@ -6,6 +6,11 @@ import TenantListPage from '../pages/tenant/TenantListPage';
 import TenantRegistrationPage from '../pages/tenant/TenantRegistrationPage';
 import { MerchantListPage } from '../pages/merchant/MerchantListPage';
 import { MerchantRegistrationPage } from '../pages/merchant/MerchantRegistrationPage';
+import { MerchantUserListPage } from '../pages/merchant-user/MerchantUserListPage';
+import { MerchantUserFormPage } from '../pages/merchant-user/MerchantUserFormPage';
+import { MerchantUserBatchCreatePage } from '../pages/merchant-user/MerchantUserBatchCreatePage';
+import { MerchantUserStatusManagePage } from '../pages/merchant-user/MerchantUserStatusManagePage';
+import { MerchantUserAuditLogPage } from '../pages/merchant-user/MerchantUserAuditLogPage';
 
 export const router = createBrowserRouter([
   {
@@ -55,6 +60,39 @@ export const router = createBrowserRouter([
           {
             path: 'register',
             element: <MerchantRegistrationPage />,
+          },
+        ],
+      },
+      {
+        path: 'merchant-user',
+        children: [
+          {
+            index: true,
+            element: <MerchantUserListPage />,
+          },
+          {
+            path: 'list',
+            element: <MerchantUserListPage />,
+          },
+          {
+            path: 'create',
+            element: <MerchantUserFormPage />,
+          },
+          {
+            path: 'edit/:id',
+            element: <MerchantUserFormPage />,
+          },
+          {
+            path: 'batch-create',
+            element: <MerchantUserBatchCreatePage />,
+          },
+          {
+            path: 'status/:id',
+            element: <MerchantUserStatusManagePage />,
+          },
+          {
+            path: 'audit-log',
+            element: <MerchantUserAuditLogPage />,
           },
         ],
       },

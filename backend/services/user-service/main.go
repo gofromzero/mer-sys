@@ -17,8 +17,9 @@ func main() {
 
 	s := g.Server()
 
-	// 创建认证控制器
+	// 创建控制器
 	authController := controller.NewAuthController()
+	merchantUserController := controller.NewMerchantUserController()
 
 	// 注册路由
 	s.Group("/api/v1", func(group *ghttp.RouterGroup) {
@@ -34,6 +35,23 @@ func main() {
 			// TODO: 添加认证中间件
 			// userGroup.Middleware(middleware.Auth)
 			userGroup.GET("/info", authController.GetUserInfo)
+		})
+
+		// 商户用户路由（需要认证）
+		group.Group("/merchant-users", func(merchantUserGroup *ghttp.RouterGroup) {
+			// TODO: 添加认证中间件和商户权限检查
+			// merchantUserGroup.Middleware(middleware.Auth, middleware.MerchantPermission)
+			merchantUserGroup.POST("/", merchantUserController.CreateMerchantUser)
+			merchantUserGroup.POST("/batch", merchantUserController.BatchCreateMerchantUsers)
+			merchantUserGroup.GET("/", merchantUserController.ListMerchantUsers)
+			merchantUserGroup.GET("/:id", merchantUserController.GetMerchantUser)
+			merchantUserGroup.PUT("/:id", merchantUserController.UpdateMerchantUser)
+			merchantUserGroup.PUT("/:id/status", merchantUserController.UpdateMerchantUserStatus)
+			merchantUserGroup.POST("/:id/reset-password", merchantUserController.ResetMerchantUserPassword)
+			
+			// 审计日志相关路由
+			merchantUserGroup.GET("/audit-logs", merchantUserController.GetMerchantUserAuditLogs)
+			merchantUserGroup.GET("/:user_id/operation-history", merchantUserController.GetMerchantUserOperationHistory)
 		})
 	})
 

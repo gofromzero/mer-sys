@@ -38,6 +38,7 @@ apiClient.interceptors.response.use(
 );
 
 export { apiClient };
+export const api = apiClient; // 为了兼容性添加 api 导出
 
 // Health check service
 export const healthService = {

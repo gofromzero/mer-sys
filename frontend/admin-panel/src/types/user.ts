@@ -14,7 +14,9 @@ export interface User {
   email: string;
   phone?: string;
   tenant_id: number;
+  merchant_id?: number;  // 新增：支持商户用户
   status: UserStatus;
+  roles?: UserRole[];    // 新增：用户角色数组
   created_at: string;
   updated_at: string;
   last_login_at?: string;

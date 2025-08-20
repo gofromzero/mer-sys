@@ -1,5 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { BrowserRouter } from 'react-router-dom'
+import { renderWithRouter, screen, fireEvent } from './utils/testUtils'
 import TenantRegistrationPage from '../pages/tenant/TenantRegistrationPage'
 
 // Mock 权限Hook
@@ -97,13 +96,6 @@ jest.mock('../components/ui/AmisRenderer', () => {
   }
 })
 
-const renderWithRouter = (component: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {component}
-    </BrowserRouter>
-  )
-}
 
 describe('TenantRegistrationPage', () => {
   it('应该正确渲染租户注册页面', () => {

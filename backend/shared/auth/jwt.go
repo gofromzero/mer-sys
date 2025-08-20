@@ -45,6 +45,7 @@ func NewJWTManagerForTest(secret string, expireHours int) *JWTManager {
 type TokenClaims struct {
 	UserID      uint64             `json:"user_id"`
 	TenantID    uint64             `json:"tenant_id"`
+	MerchantID  *uint64            `json:"merchant_id,omitempty"` // 商户ID，可为空
 	Username    string             `json:"username"`
 	Email       string             `json:"email"`
 	Roles       []types.RoleType   `json:"roles"`
@@ -77,6 +78,7 @@ func (j *JWTManager) GenerateTokenWithPermissions(ctx context.Context, user *typ
 	claims := &TokenClaims{
 		UserID:      user.ID,
 		TenantID:    user.TenantID,
+		MerchantID:  user.MerchantID, // 包含商户ID
 		Username:    user.Username,
 		Email:       user.Email,
 		Roles:       userPermissions.Roles,
@@ -407,9 +409,37 @@ func (tc *TokenClaims) GetUserPermissions() *types.UserPermissions {
 	return &types.UserPermissions{
 		UserID:      tc.UserID,
 		TenantID:    tc.TenantID,
+		MerchantID:  tc.MerchantID,
 		Roles:       tc.Roles,
 		Permissions: tc.Permissions,
 	}
+}
+
+// IsMerchantUser 检查是否为商户用户
+func (tc *TokenClaims) IsMerchantUser() bool {
+	return tc.MerchantID != nil
+}
+
+// HasMerchantRole 检查是否拥有指定的商户角色
+func (tc *TokenClaims) HasMerchantRole(role types.RoleType) bool {
+	if !tc.IsMerchantUser() {
+		return false
+	}
+	
+	for _, r := range tc.Roles {
+		if r == role {
+			return true
+		}
+	}
+	return false
+}
+
+// GetMerchantID 获取商户ID
+func (tc *TokenClaims) GetMerchantID() uint64 {
+	if tc.MerchantID == nil {
+		return 0
+	}
+	return *tc.MerchantID
 }
 
 // AddTokenToBlacklist 添加令牌到黑名单
@@ -517,15 +547,17 @@ func (j *JWTManager) RevokeAllUserTokens(ctx context.Context, userID uint64) err
 
 // UserInfo 用户信息
 type UserInfo struct {
-	UserID   uint64 `json:"user_id"`
-	TenantID uint64 `json:"tenant_id"`
-	Username string `json:"username"`
+	UserID     uint64  `json:"user_id"`
+	TenantID   uint64  `json:"tenant_id"`
+	MerchantID *uint64 `json:"merchant_id,omitempty"`
+	Username   string  `json:"username"`
 }
 
 // GetUserInfoFromContext 从上下文获取用户信息
 func GetUserInfoFromContext(ctx context.Context) *UserInfo {
 	userID := ctx.Value("user_id")
 	tenantID := ctx.Value("tenant_id")
+	merchantID := ctx.Value("merchant_id")
 	username := ctx.Value("username")
 
 	if userID == nil || tenantID == nil {
@@ -536,7 +568,7 @@ func GetUserInfoFromContext(ctx context.Context) *UserInfo {
 		}
 	}
 
-	return &UserInfo{
+	userInfo := &UserInfo{
 		UserID:   userID.(uint64),
 		TenantID: tenantID.(uint64),
 		Username: func() string {
@@ -546,4 +578,13 @@ func GetUserInfoFromContext(ctx context.Context) *UserInfo {
 			return "unknown"
 		}(),
 	}
+
+	// 如果存在商户ID，则设置
+	if merchantID != nil {
+		if mid, ok := merchantID.(uint64); ok {
+			userInfo.MerchantID = &mid
+		}
+	}
+
+	return userInfo
 }

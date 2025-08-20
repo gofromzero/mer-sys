@@ -356,3 +356,267 @@ func (r *UserRepository) RemoveRole(ctx context.Context, userID, tenantID uint64
 
 	return err
 }
+
+// ========================= 商户用户专用方法 =========================
+
+// CreateMerchantUser 创建商户用户
+func (r *UserRepository) CreateMerchantUser(ctx context.Context, user *types.User, roleType types.RoleType) error {
+	if user.MerchantID == nil {
+		return fmt.Errorf("商户用户必须关联商户")
+	}
+
+	// 验证商户用户数据
+	if err := user.ValidateMerchantUser(); err != nil {
+		return err
+	}
+
+	tenantID, err := r.GetTenantID(ctx)
+	if err != nil {
+		return err
+	}
+
+	// 检查用户名在当前租户+商户下是否已存在
+	exists, err := r.MerchantUserExists(ctx, "username", user.Username, *user.MerchantID)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("用户名在该商户下已存在: %s", user.Username)
+	}
+
+	// 检查邮箱在当前租户+商户下是否已存在
+	exists, err = r.MerchantUserExists(ctx, "email", user.Email, *user.MerchantID)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("邮箱在该商户下已存在: %s", user.Email)
+	}
+
+	// 设置租户ID
+	user.TenantID = tenantID
+
+	// 开始事务
+	tx, err := g.DB().Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+
+	// 插入用户数据
+	result, err := tx.Model("users").Insert(user)
+	if err != nil {
+		return err
+	}
+
+	userID, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	// 分配商户角色
+	_, err = tx.Model("user_roles").Insert(gdb.Map{
+		"user_id":     userID,
+		"tenant_id":   tenantID,
+		"role_type":   roleType,
+		"resource_id": user.MerchantID, // 商户角色的resource_id是merchant_id
+		"created_at":  gtime.Now(),
+		"updated_at":  gtime.Now(),
+	})
+
+	return err
+}
+
+// FindMerchantUsers 查找商户下的用户列表
+func (r *UserRepository) FindMerchantUsers(ctx context.Context, merchantID uint64, page, pageSize int, searchKeyword string) ([]*types.User, int, error) {
+	model, err := r.Model(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// 构建查询条件
+	query := model.Where("merchant_id = ?", merchantID)
+
+	// 如果有搜索关键词，添加搜索条件
+	if searchKeyword != "" {
+		query = query.Where("username LIKE ? OR email LIKE ? OR phone LIKE ?", 
+			"%"+searchKeyword+"%", "%"+searchKeyword+"%", "%"+searchKeyword+"%")
+	}
+
+	// 获取总数
+	total, err := query.Count()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// 分页查询
+	records, err := query.
+		Page(page, pageSize).
+		OrderDesc("created_at").
+		All()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var users []*types.User
+	for _, record := range records {
+		var user types.User
+		if err := record.Struct(&user); err != nil {
+			return nil, 0, err
+		}
+		users = append(users, &user)
+	}
+
+	return users, total, nil
+}
+
+// FindMerchantUserByID 根据ID查找商户用户
+func (r *UserRepository) FindMerchantUserByID(ctx context.Context, userID, merchantID uint64) (*types.User, error) {
+	model, err := r.Model(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	record, err := model.Where("id = ? AND merchant_id = ?", userID, merchantID).One()
+	if err != nil {
+		return nil, err
+	}
+
+	if record.IsEmpty() {
+		return nil, fmt.Errorf("商户用户不存在: %d", userID)
+	}
+
+	var user types.User
+	if err := record.Struct(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+// UpdateMerchantUserStatus 更新商户用户状态
+func (r *UserRepository) UpdateMerchantUserStatus(ctx context.Context, userID, merchantID uint64, status types.UserStatus) error {
+	model, err := r.Model(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = model.Where("id = ? AND merchant_id = ?", userID, merchantID).
+		Update(gdb.Map{
+			"status":     status,
+			"updated_at": gtime.Now(),
+		})
+
+	return err
+}
+
+// UpdateMerchantUser 更新商户用户信息
+func (r *UserRepository) UpdateMerchantUser(ctx context.Context, userID, merchantID uint64, data interface{}) error {
+	model, err := r.Model(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = model.Where("id = ? AND merchant_id = ?", userID, merchantID).
+		Update(data)
+
+	return err
+}
+
+// ResetMerchantUserPassword 重置商户用户密码
+func (r *UserRepository) ResetMerchantUserPassword(ctx context.Context, userID, merchantID uint64, newPasswordHash string) error {
+	model, err := r.Model(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = model.Where("id = ? AND merchant_id = ?", userID, merchantID).
+		Update(gdb.Map{
+			"password_hash": newPasswordHash,
+			"updated_at":    gtime.Now(),
+		})
+
+	return err
+}
+
+// MerchantUserExists 检查商户用户是否存在
+func (r *UserRepository) MerchantUserExists(ctx context.Context, field string, value interface{}, merchantID uint64) (bool, error) {
+	model, err := r.Model(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	count, err := model.Where(fmt.Sprintf("%s = ? AND merchant_id = ?", field), value, merchantID).Count()
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+// GetMerchantUserRoles 获取商户用户角色列表
+func (r *UserRepository) GetMerchantUserRoles(ctx context.Context, userID, merchantID uint64) ([]types.RoleType, error) {
+	tenantID, err := r.GetTenantID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// 从user_roles表查询商户用户角色
+	records, err := g.DB().Model("user_roles").
+		Where("user_id = ? AND tenant_id = ? AND resource_id = ?", userID, tenantID, merchantID).
+		Fields("role_type").
+		All()
+
+	if err != nil {
+		g.Log().Errorf(ctx, "查询商户用户角色失败: %v", err)
+		return nil, err
+	}
+
+	var roles []types.RoleType
+	for _, record := range records {
+		roleType := types.RoleType(record["role_type"].String())
+		roles = append(roles, roleType)
+	}
+
+	return roles, nil
+}
+
+// AssignMerchantUserRole 为商户用户分配角色
+func (r *UserRepository) AssignMerchantUserRole(ctx context.Context, userID, merchantID uint64, roleType types.RoleType) error {
+	tenantID, err := r.GetTenantID(ctx)
+	if err != nil {
+		return err
+	}
+
+	// 检查角色是否已存在
+	exists, err := g.DB().Model("user_roles").
+		Where("user_id = ? AND tenant_id = ? AND resource_id = ? AND role_type = ?", 
+			userID, tenantID, merchantID, roleType).
+		Count()
+
+	if err != nil {
+		return err
+	}
+
+	if exists > 0 {
+		return fmt.Errorf("用户已拥有该商户角色: %s", roleType)
+	}
+
+	// 插入用户角色记录
+	_, err = g.DB().Model("user_roles").Insert(gdb.Map{
+		"user_id":     userID,
+		"tenant_id":   tenantID,
+		"resource_id": merchantID,
+		"role_type":   roleType,
+		"created_at":  gtime.Now(),
+		"updated_at":  gtime.Now(),
+	})
+
+	return err
+}
