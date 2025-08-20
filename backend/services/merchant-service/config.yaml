@@ -1,0 +1,47 @@
+# merchant-service 配置文件
+
+server:
+  address: ":8082"
+  name: "merchant-service"
+
+# 数据库配置
+database:
+  default:
+    host: "mysql"
+    port: "3306"
+    user: "mer_user"
+    pass: "mer_password"
+    name: "mer_system"
+    type: "mysql"
+    charset: "utf8mb4"
+    timezone: "Asia/Shanghai"
+    maxIdle: 10
+    maxOpen: 20
+    maxLifetime: 30
+
+# Redis配置
+redis:
+  default:
+    address: "redis:6379"
+    db: 0
+    pass: ""
+
+# 日志配置
+logger:
+  level: "info"
+  stdout: true
+
+# 认证配置
+auth:
+  jwt:
+    secret: "${JWT_SECRET:default-jwt-secret-change-in-production}"
+    expire: 86400  # 24小时
+
+# 权限配置
+permissions:
+  merchant:
+    create: "创建商户"
+    view: "查看商户"
+    update: "更新商户"
+    manage: "管理商户"
+    approve: "审批商户"

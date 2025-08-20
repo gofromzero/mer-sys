@@ -3,6 +3,7 @@ package audit
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gogf/gf/v2/frame/g"
@@ -219,4 +220,56 @@ func LogDataQuery(ctx context.Context, tenantID uint64, resourceType, query stri
 // LogSecurityViolation 全局函数：记录安全违规事件
 func LogSecurityViolation(ctx context.Context, tenantID uint64, violationType, message string, details interface{}) {
 	defaultAuditLogger.LogSecurityViolation(ctx, tenantID, violationType, message, details)
+}
+
+// LogOperation 记录一般操作
+func LogOperation(ctx context.Context, resourceType, action string, details interface{}) {
+	// 从上下文获取租户ID和用户ID
+	var tenantID uint64
+	var userID uint64
+	
+	if tid := ctx.Value("tenant_id"); tid != nil {
+		if id, ok := tid.(uint64); ok {
+			tenantID = id
+		}
+	}
+	
+	if uid := ctx.Value("user_id"); uid != nil {
+		if id, ok := uid.(uint64); ok {
+			userID = id
+		}
+	}
+
+	event := AuditEvent{
+		EventType:    EventTenantAccess,
+		Severity:     SeverityInfo,
+		TenantID:     tenantID,
+		UserID:       userID,
+		ResourceType: resourceType,
+		Action:       action,
+		IPAddress:    defaultAuditLogger.getIPAddress(ctx),
+		UserAgent:    defaultAuditLogger.getUserAgent(ctx),
+		Message:      fmt.Sprintf("%s %s 操作", resourceType, action),
+		Details:      details,
+		Timestamp:    time.Now(),
+	}
+
+	defaultAuditLogger.logEvent(ctx, event)
+}
+
+// GetOperationLogs 获取操作日志（模拟实现）
+func GetOperationLogs(ctx context.Context, resourceType, resourceID string) ([]g.Map, error) {
+	// 这里应该从数据库或日志系统查询审计日志
+	// 现在返回模拟数据用于开发
+	return []g.Map{
+		{
+			"id":            1,
+			"resource_type": resourceType,
+			"resource_id":   resourceID,
+			"action":        "register",
+			"user_id":       1,
+			"timestamp":     time.Now().Format("2006-01-02 15:04:05"),
+			"details":       "商户注册申请",
+		},
+	}, nil
 }

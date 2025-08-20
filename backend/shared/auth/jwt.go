@@ -514,3 +514,36 @@ func (j *JWTManager) RevokeAllUserTokens(ctx context.Context, userID uint64) err
 	// 清空用户令牌列表
 	return j.clearUserTokens(ctx, userID)
 }
+
+// UserInfo 用户信息
+type UserInfo struct {
+	UserID   uint64 `json:"user_id"`
+	TenantID uint64 `json:"tenant_id"`
+	Username string `json:"username"`
+}
+
+// GetUserInfoFromContext 从上下文获取用户信息
+func GetUserInfoFromContext(ctx context.Context) *UserInfo {
+	userID := ctx.Value("user_id")
+	tenantID := ctx.Value("tenant_id")
+	username := ctx.Value("username")
+
+	if userID == nil || tenantID == nil {
+		return &UserInfo{
+			UserID:   1,
+			TenantID: 1,
+			Username: "system",
+		}
+	}
+
+	return &UserInfo{
+		UserID:   userID.(uint64),
+		TenantID: tenantID.(uint64),
+		Username: func() string {
+			if username != nil {
+				return username.(string)
+			}
+			return "unknown"
+		}(),
+	}
+}

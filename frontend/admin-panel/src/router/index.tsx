@@ -4,6 +4,8 @@ import { LoginPage } from '../pages/auth/LoginPage';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import TenantListPage from '../pages/tenant/TenantListPage';
 import TenantRegistrationPage from '../pages/tenant/TenantRegistrationPage';
+import { MerchantListPage } from '../pages/merchant/MerchantListPage';
+import { MerchantRegistrationPage } from '../pages/merchant/MerchantRegistrationPage';
 
 export const router = createBrowserRouter([
   {
@@ -36,6 +38,23 @@ export const router = createBrowserRouter([
           {
             path: 'register',
             element: <TenantRegistrationPage />,
+          },
+        ],
+      },
+      {
+        path: 'merchant',
+        children: [
+          {
+            index: true,
+            element: <MerchantListPage />,
+          },
+          {
+            path: 'list',
+            element: <MerchantListPage />,
+          },
+          {
+            path: 'register',
+            element: <MerchantRegistrationPage />,
           },
         ],
       },

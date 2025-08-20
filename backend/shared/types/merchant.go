@@ -18,14 +18,16 @@ const (
 
 // BusinessInfo 商户业务信息
 type BusinessInfo struct {
-	Type        string `json:"type"`         // 商户类型: retail, wholesale, service
-	Category    string `json:"category"`     // 业务分类
-	License     string `json:"license"`      // 营业执照号
-	LegalName   string `json:"legal_name"`   // 法人名称
-	ContactName string `json:"contact_name"` // 联系人姓名
+	Type         string `json:"type"`          // 商户类型: retail, wholesale, service
+	Category     string `json:"category"`      // 业务分类
+	License      string `json:"license"`       // 营业执照号
+	LegalName    string `json:"legal_name"`    // 法人名称
+	ContactName  string `json:"contact_name"`  // 联系人姓名
 	ContactPhone string `json:"contact_phone"` // 联系电话
-	Address     string `json:"address"`      // 经营地址
-	Description string `json:"description"`  // 商户描述
+	ContactEmail string `json:"contact_email"` // 联系邮箱
+	Address      string `json:"address"`       // 经营地址
+	Scope        string `json:"scope"`         // 经营范围
+	Description  string `json:"description"`   // 商户描述
 }
 
 // RightsBalance 权益余额信息
@@ -42,15 +44,18 @@ func (rb *RightsBalance) AvailableBalance() float64 {
 
 // Merchant 商户实体
 type Merchant struct {
-	ID           uint64         `json:"id" db:"id"`
-	TenantID     uint64         `json:"tenant_id" db:"tenant_id"`
-	Name         string         `json:"name" db:"name"`
-	Code         string         `json:"code" db:"code"`
-	Status       MerchantStatus `json:"status" db:"status"`
-	BusinessInfo *BusinessInfo  `json:"business_info" db:"business_info"`
-	RightsBalance *RightsBalance `json:"rights_balance" db:"rights_balance"`
-	CreatedAt    time.Time      `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at" db:"updated_at"`
+	ID             uint64         `json:"id" db:"id"`
+	TenantID       uint64         `json:"tenant_id" db:"tenant_id"`
+	Name           string         `json:"name" db:"name"`
+	Code           string         `json:"code" db:"code"`
+	Status         MerchantStatus `json:"status" db:"status"`
+	BusinessInfo   *BusinessInfo  `json:"business_info" db:"business_info"`
+	RightsBalance  *RightsBalance `json:"rights_balance" db:"rights_balance"`
+	RegistrationTime *time.Time   `json:"registration_time" db:"registration_time"` // 注册申请时间
+	ApprovalTime     *time.Time   `json:"approval_time" db:"approval_time"`         // 审批时间
+	ApprovedBy       *uint64      `json:"approved_by" db:"approved_by"`             // 审批人ID
+	CreatedAt      time.Time      `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at" db:"updated_at"`
 }
 
 // MarshalJSON 自定义JSON序列化
@@ -182,6 +187,40 @@ type Order struct {
 	TotalRightsCost float64           `json:"total_rights_cost" db:"total_rights_cost"`
 	CreatedAt       time.Time         `json:"created_at" db:"created_at"`
 	UpdatedAt       time.Time         `json:"updated_at" db:"updated_at"`
+}
+
+// MerchantRegistrationRequest 商户注册请求
+type MerchantRegistrationRequest struct {
+	Name         string        `json:"name" binding:"required,min=1,max=100"`
+	Code         string        `json:"code" binding:"required,min=1,max=50,alphanum"`
+	BusinessInfo *BusinessInfo `json:"business_info" binding:"required"`
+}
+
+// MerchantApprovalRequest 商户审批请求
+type MerchantApprovalRequest struct {
+	Action  string `json:"action" binding:"required,oneof=approve reject"` // approve 或 reject
+	Comment string `json:"comment,omitempty"`                              // 审批意见
+}
+
+// MerchantUpdateRequest 商户信息更新请求
+type MerchantUpdateRequest struct {
+	Name         *string       `json:"name,omitempty" binding:"omitempty,min=1,max=100"`
+	BusinessInfo *BusinessInfo `json:"business_info,omitempty"`
+}
+
+// MerchantStatusUpdateRequest 商户状态更新请求
+type MerchantStatusUpdateRequest struct {
+	Status  MerchantStatus `json:"status" binding:"required,oneof=active suspended deactivated"`
+	Comment string         `json:"comment,omitempty"` // 状态变更原因
+}
+
+// MerchantListQuery 商户列表查询参数
+type MerchantListQuery struct {
+	Page     int            `form:"page,default=1" binding:"min=1"`
+	PageSize int            `form:"page_size,default=20" binding:"min=1,max=100"`
+	Status   MerchantStatus `form:"status,omitempty"`
+	Name     string         `form:"name,omitempty"`
+	Search   string         `form:"search,omitempty"` // 全文搜索
 }
 
 // 跨租户访问错误

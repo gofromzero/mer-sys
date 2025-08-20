@@ -1,4 +1,4 @@
-module github.com/gofromzero/mer-sys/backend/services/tenant-service
+module github.com/gofromzero/mer-sys/backend/services/merchant-service
 
 go 1.25.0
 
