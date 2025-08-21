@@ -70,6 +70,44 @@ Object.defineProperty(URL, 'revokeObjectURL', {
 // 设置测试环境变量
 process.env.NODE_ENV = 'test';
 
+// Mock canvas module completely
+jest.mock('canvas', () => ({
+  createCanvas: () => ({
+    getContext: () => ({
+      fillRect: jest.fn(),
+      clearRect: jest.fn(),
+      getImageData: jest.fn(() => ({ data: [] })),
+      putImageData: jest.fn(),
+      createImageData: jest.fn(() => ({ data: [] })),
+      setTransform: jest.fn(),
+      drawImage: jest.fn(),
+      save: jest.fn(),
+      restore: jest.fn(),
+      beginPath: jest.fn(),
+      moveTo: jest.fn(),
+      lineTo: jest.fn(),
+      closePath: jest.fn(),
+      stroke: jest.fn(),
+      fill: jest.fn(),
+      fillText: jest.fn(),
+      measureText: jest.fn(() => ({ width: 0 })),
+      arc: jest.fn(),
+      scale: jest.fn(),
+      rotate: jest.fn(),
+      translate: jest.fn(),
+    }),
+    toBuffer: jest.fn(),
+    toDataURL: jest.fn(() => 'data:image/png;base64,mock'),
+    width: 300,
+    height: 150,
+  }),
+  loadImage: jest.fn(() => Promise.resolve({
+    width: 100,
+    height: 100
+  })),
+  registerFont: jest.fn(),
+}));
+
 // 全局测试配置
 beforeEach(() => {
   // 清除所有模拟调用

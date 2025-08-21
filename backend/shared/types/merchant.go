@@ -234,6 +234,158 @@ type MerchantListQuery struct {
 	Search   string         `form:"search,omitempty"` // 全文搜索
 }
 
+// 权益使用趋势点 (复用 monitoring.go 中的 TimePeriod 和 TrendDirection)
+type RightsUsagePoint struct {
+	Date    time.Time      `json:"date"`
+	Balance float64        `json:"balance"`
+	Usage   float64        `json:"usage"`
+	Trend   TrendDirection `json:"trend"`
+}
+
+// 任务类型
+type TaskType string
+
+const (
+	TaskTypeOrderProcessing       TaskType = "order_processing"
+	TaskTypeVerificationPending  TaskType = "verification_pending"
+	TaskTypeLowBalanceWarning     TaskType = "low_balance_warning"
+	TaskTypeProductUpdateNeeded   TaskType = "product_update_needed"
+)
+
+// 优先级
+type Priority string
+
+const (
+	PriorityLow    Priority = "low"
+	PriorityNormal Priority = "normal"
+	PriorityHigh   Priority = "high"
+	PriorityUrgent Priority = "urgent"
+)
+
+// 待处理任务
+type PendingTask struct {
+	ID          string     `json:"id"`
+	Type        TaskType   `json:"type"`
+	Description string     `json:"description"`
+	Priority    Priority   `json:"priority"`
+	DueDate     *time.Time `json:"due_date,omitempty"`
+	Count       int        `json:"count"`
+}
+
+// 公告信息
+type Announcement struct {
+	ID          uint64     `json:"id"`
+	Title       string     `json:"title"`
+	Content     string     `json:"content"`
+	Priority    Priority   `json:"priority"`
+	PublishDate time.Time  `json:"publish_date"`
+	ExpireDate  *time.Time `json:"expire_date,omitempty"`
+	ReadStatus  bool       `json:"read_status"`
+}
+
+// 通知信息
+type Notification struct {
+	ID        uint64    `json:"id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	Type      string    `json:"type"`
+	Priority  Priority  `json:"priority"`
+	ReadAt    *time.Time `json:"read_at,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// 商户仪表板数据
+type MerchantDashboardData struct {
+	MerchantID   uint64   `json:"merchant_id"`
+	TenantID     uint64   `json:"tenant_id"`
+	Period       TimePeriod `json:"period"`
+	
+	// 核心业务指标 (AC: 1)
+	TotalSales     float64        `json:"total_sales"`      // 总销售额
+	TotalOrders    int            `json:"total_orders"`     // 总订单数
+	TotalCustomers int            `json:"total_customers"`  // 总客户数
+	RightsBalance  *RightsBalance `json:"rights_balance"`   // 权益余额
+	
+	// 权益使用情况 (AC: 2) 
+	RightsUsageTrend       []RightsUsagePoint `json:"rights_usage_trend"`
+	RightsAlerts          []RightsAlert      `json:"rights_alerts"`
+	PredictedDepletionDays *int               `json:"predicted_depletion_days,omitempty"`
+	
+	// 待处理事项 (AC: 3)
+	PendingOrders         int            `json:"pending_orders"`         // 待处理订单
+	PendingVerifications  int            `json:"pending_verifications"`  // 待核销订单
+	PendingTasks         []PendingTask   `json:"pending_tasks"`
+	
+	// 系统通知 (AC: 4)
+	Announcements []Announcement `json:"announcements"`
+	Notifications []Notification `json:"notifications"`
+	
+	LastUpdated time.Time `json:"last_updated"`
+}
+
+// 组件位置
+type Position struct {
+	X int `json:"x"`
+	Y int `json:"y"`
+}
+
+// 组件大小
+type Size struct {
+	Width  int `json:"width"`
+	Height int `json:"height"`
+}
+
+// 组件类型
+type WidgetType string
+
+const (
+	WidgetTypeSalesOverview  WidgetType = "sales_overview"
+	WidgetTypeRightsBalance  WidgetType = "rights_balance"
+	WidgetTypeRightsTrend    WidgetType = "rights_trend"
+	WidgetTypePendingTasks   WidgetType = "pending_tasks"
+	WidgetTypeRecentOrders   WidgetType = "recent_orders"
+	WidgetTypeAnnouncements  WidgetType = "announcements"
+	WidgetTypeQuickActions   WidgetType = "quick_actions"
+)
+
+// 仪表板组件
+type DashboardWidget struct {
+	ID       string                 `json:"id"`
+	Type     WidgetType             `json:"type"`
+	Position Position               `json:"position"`
+	Size     Size                   `json:"size"`
+	Config   map[string]interface{} `json:"config"`
+	Visible  bool                   `json:"visible"`
+}
+
+// 组件偏好设置
+type WidgetPreference struct {
+	WidgetType WidgetType             `json:"widget_type"`
+	Enabled    bool                   `json:"enabled"`
+	Config     map[string]interface{} `json:"config"`
+}
+
+// 布局配置
+type LayoutConfig struct {
+	Columns int               `json:"columns"`
+	Widgets []DashboardWidget `json:"widgets"`
+}
+
+// 移动端布局配置
+type MobileLayoutConfig struct {
+	Columns int               `json:"columns"`
+	Widgets []DashboardWidget `json:"widgets"`
+}
+
+// 仪表板配置
+type DashboardConfig struct {
+	MerchantID       uint64               `json:"merchant_id" db:"merchant_id"`
+	LayoutConfig     *LayoutConfig        `json:"layout_config" db:"layout_config"`
+	WidgetPreferences []WidgetPreference  `json:"widget_preferences" db:"widget_preferences"`
+	RefreshInterval  int                  `json:"refresh_interval" db:"refresh_interval"` // 秒
+	MobileLayout     *MobileLayoutConfig  `json:"mobile_layout" db:"mobile_layout"`
+}
+
 // 跨租户访问错误
 var (
 	ErrCrossTenantAccess = errors.New("cross-tenant access denied")

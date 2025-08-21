@@ -1,7 +1,7 @@
 /** @type {import('jest').Config} */
 const config = {
   // 测试环境
-  testEnvironment: 'jsdom',
+  testEnvironment: '@happy-dom/jest-environment',
   
   // 根目录
   rootDir: '.',
@@ -30,7 +30,8 @@ const config = {
   // 模块名映射（处理路径别名）
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy'
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '^canvas$': '<rootDir>/src/__mocks__/canvas.js'
   },
   
   // 设置文件
