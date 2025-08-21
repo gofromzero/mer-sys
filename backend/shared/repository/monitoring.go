@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +13,8 @@ import (
 
 	"mer-demo/shared/types"
 )
+
+var ErrTenantRequired = errors.New("tenant_id is required")
 
 // MonitoringRepository 监控数据访问接口
 type MonitoringRepository interface {
@@ -46,15 +50,15 @@ type monitoringRepository struct {
 // NewMonitoringRepository 创建监控数据访问实例
 func NewMonitoringRepository() MonitoringRepository {
 	return &monitoringRepository{
-		BaseRepository: NewBaseRepository("rights_alerts"),
+		BaseRepository: NewBaseRepository(),
 	}
 }
 
 // CreateAlert 创建预警记录
 func (r *monitoringRepository) CreateAlert(ctx context.Context, alert *types.RightsAlert) error {
-	tenantID, err := r.GetTenantID(ctx)
-	if err != nil {
-		return fmt.Errorf("获取租户ID失败: %w", err)
+	tenantID := r.GetTenantID(ctx)
+	if tenantID == 0 {
+		return fmt.Errorf("missing tenant_id in context")
 	}
 	alert.TenantID = tenantID
 	alert.CreatedAt = time.Now()
@@ -66,9 +70,9 @@ func (r *monitoringRepository) CreateAlert(ctx context.Context, alert *types.Rig
 
 // GetAlert 获取预警记录
 func (r *monitoringRepository) GetAlert(ctx context.Context, id uint64) (*types.RightsAlert, error) {
-	tenantID, err := r.GetTenantID(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("获取租户ID失败: %w", err)
+	tenantID := r.GetTenantID(ctx)
+	if tenantID == 0 {
+		return nil, fmt.Errorf("missing tenant_id in context")
 	}
 
 	var alert types.RightsAlert
@@ -89,9 +93,9 @@ func (r *monitoringRepository) GetAlert(ctx context.Context, id uint64) (*types.
 
 // ListAlerts 获取预警记录列表
 func (r *monitoringRepository) ListAlerts(ctx context.Context, query *types.AlertListQuery) ([]*types.RightsAlert, int, error) {
-	tenantID, err := r.GetTenantID(ctx)
-	if err != nil {
-		return nil, 0, fmt.Errorf("获取租户ID失败: %w", err)
+	tenantID := r.GetTenantID(ctx)
+	if tenantID == 0 {
+		return nil, 0, fmt.Errorf("missing tenant_id in context")
 	}
 
 	model := g.DB().Model("rights_alerts").
@@ -138,9 +142,9 @@ func (r *monitoringRepository) ListAlerts(ctx context.Context, query *types.Aler
 
 // UpdateAlert 更新预警记录
 func (r *monitoringRepository) UpdateAlert(ctx context.Context, alert *types.RightsAlert) error {
-	tenantID, err := r.GetTenantID(ctx)
-	if err != nil {
-		return fmt.Errorf("获取租户ID失败: %w", err)
+	tenantID := r.GetTenantID(ctx)
+	if tenantID == 0 {
+		return fmt.Errorf("missing tenant_id in context")
 	}
 
 	alert.UpdatedAt = time.Now()
@@ -155,9 +159,9 @@ func (r *monitoringRepository) UpdateAlert(ctx context.Context, alert *types.Rig
 
 // ResolveAlert 解决预警
 func (r *monitoringRepository) ResolveAlert(ctx context.Context, id uint64, resolution string) error {
-	tenantID, err := r.GetTenantID(ctx)
-	if err != nil {
-		return fmt.Errorf("获取租户ID失败: %w", err)
+	tenantID := r.GetTenantID(ctx)
+	if tenantID == 0 {
+		return fmt.Errorf("missing tenant_id in context")
 	}
 
 	now := time.Now()
@@ -178,9 +182,9 @@ func (r *monitoringRepository) ResolveAlert(ctx context.Context, id uint64, reso
 
 // GetActiveAlertsCount 获取活跃预警数量
 func (r *monitoringRepository) GetActiveAlertsCount(ctx context.Context, merchantID *uint64) (int, error) {
-	tenantID, err := r.GetTenantID(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("获取租户ID失败: %w", err)
+	tenantID := r.GetTenantID(ctx)
+	if tenantID == 0 {
+		return 0, ErrTenantRequired
 	}
 
 	model := g.DB().Model("rights_alerts").
@@ -313,7 +317,7 @@ func (r *monitoringRepository) GetMerchantUsageInfo(ctx context.Context, limit i
 		LIMIT ?`
 
 	var results []*types.MerchantUsageInfo
-	err := g.DB().Ctx(ctx).GetScan(&results, sql, tenantID, limit)
+	err := g.DB().Ctx(ctx).Raw(sql, tenantID, limit).Scan(&results)
 	return results, err
 }
 
@@ -343,7 +347,7 @@ func (r *monitoringRepository) GetDailyUsageTrends(ctx context.Context, days int
 	sql += " GROUP BY stat_date ORDER BY stat_date ASC"
 
 	var trends []*types.DailyUsageTrend
-	err := g.DB().Ctx(ctx).GetScan(&trends, sql, params...)
+	err := g.DB().Ctx(ctx).Raw(sql, params...).Scan(&trends)
 	return trends, err
 }
 
@@ -389,9 +393,9 @@ func (r *monitoringRepository) GetDashboardData(ctx context.Context, merchantID 
 		WHERE tenant_id = ? AND status = 'active'`
 	if merchantID != nil {
 		balanceSQL += " AND id = ?"
-		err = g.DB().Ctx(ctx).GetVar(balanceSQL, tenantID, *merchantID).Scan(&totalBalance)
+		err = g.DB().Ctx(ctx).Raw(balanceSQL, tenantID, *merchantID).Scan(&totalBalance)
 	} else {
-		err = g.DB().Ctx(ctx).GetVar(balanceSQL, tenantID).Scan(&totalBalance)
+		err = g.DB().Ctx(ctx).Raw(balanceSQL, tenantID).Scan(&totalBalance)
 	}
 	if err != nil {
 		return nil, err
@@ -408,18 +412,23 @@ func (r *monitoringRepository) GetDashboardData(ctx context.Context, merchantID 
 	
 	if merchantID != nil {
 		avgUsageSQL += " AND merchant_id = ?"
-		err = g.DB().Ctx(ctx).GetVar(avgUsageSQL, tenantID, types.TimePeriodDaily, *merchantID).Scan(&data.AvgDailyUsage)
+		err = g.DB().Ctx(ctx).Raw(avgUsageSQL, tenantID, types.TimePeriodDaily, *merchantID).Scan(&data.AvgDailyUsage)
 	} else {
-		err = g.DB().Ctx(ctx).GetVar(avgUsageSQL, tenantID, types.TimePeriodDaily).Scan(&data.AvgDailyUsage)
+		err = g.DB().Ctx(ctx).Raw(avgUsageSQL, tenantID, types.TimePeriodDaily).Scan(&data.AvgDailyUsage)
 	}
 	if err != nil {
 		return nil, err
 	}
 
 	// 获取使用量排名前5的商户
-	data.TopMerchantsByUsage, err = r.GetMerchantUsageInfo(ctx, 5)
+	topMerchants, err := r.GetMerchantUsageInfo(ctx, 5)
 	if err != nil {
 		return nil, err
+	}
+	// 转换指针数组到值数组
+	data.TopMerchantsByUsage = make([]types.MerchantUsageInfo, len(topMerchants))
+	for i, merchant := range topMerchants {
+		data.TopMerchantsByUsage[i] = *merchant
 	}
 
 	// 获取最近5条预警
@@ -440,9 +449,14 @@ func (r *monitoringRepository) GetDashboardData(ctx context.Context, merchantID 
 	}
 
 	// 获取最近30天使用趋势
-	data.UsageTrends, err = r.GetDailyUsageTrends(ctx, 30, merchantID)
+	trends, err := r.GetDailyUsageTrends(ctx, 30, merchantID)
 	if err != nil {
 		return nil, err
+	}
+	// 转换指针数组到值数组
+	data.UsageTrends = make([]types.DailyUsageTrend, len(trends))
+	for i, trend := range trends {
+		data.UsageTrends[i] = *trend
 	}
 
 	return data, nil
@@ -476,7 +490,7 @@ func (r *monitoringRepository) UpdateMerchantThresholds(ctx context.Context, mer
 		// 解析当前JSON并更新阈值字段
 		var balanceMap map[string]interface{}
 		if currentBalance != "" {
-			if err := g.JSON().Unmarshal([]byte(currentBalance), &balanceMap); err != nil {
+			if err := json.Unmarshal([]byte(currentBalance), &balanceMap); err != nil {
 				balanceMap = make(map[string]interface{})
 			}
 		} else {
@@ -490,7 +504,7 @@ func (r *monitoringRepository) UpdateMerchantThresholds(ctx context.Context, mer
 			balanceMap["critical_threshold"] = *criticalThreshold
 		}
 
-		newBalanceJSON, err := g.JSON().Marshal(balanceMap)
+		newBalanceJSON, err := json.Marshal(balanceMap)
 		if err != nil {
 			return err
 		}
@@ -530,7 +544,7 @@ func (r *monitoringRepository) GetMerchantThresholds(ctx context.Context, mercha
 	}
 
 	var balanceMap map[string]interface{}
-	if err := g.JSON().Unmarshal([]byte(balanceJSON), &balanceMap); err != nil {
+	if err := json.Unmarshal([]byte(balanceJSON), &balanceMap); err != nil {
 		return nil, nil, err
 	}
 

@@ -49,7 +49,7 @@ type dashboardRepositoryImpl struct {
 // NewDashboardRepository 创建仪表板数据访问实例
 func NewDashboardRepository() DashboardRepository {
 	return &dashboardRepositoryImpl{
-		BaseRepository: NewBaseRepository("merchants"),
+		BaseRepository: NewBaseRepository(),
 		db:             g.DB(),
 	}
 }

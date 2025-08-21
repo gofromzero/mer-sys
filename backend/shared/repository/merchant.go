@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/gogf/gf/v2/database/gdb"
@@ -34,16 +35,16 @@ type merchantRepository struct {
 // NewMerchantRepository 创建商户仓储实例
 func NewMerchantRepository() MerchantRepository {
 	return &merchantRepository{
-		BaseRepository: NewBaseRepository("merchants"),
+		BaseRepository: NewBaseRepository(),
 	}
 }
 
 // Create 创建商户
 func (r *merchantRepository) Create(ctx context.Context, merchant *types.Merchant) error {
 	// 确保商户属于当前租户
-	tenantID, err := r.GetTenantID(ctx)
-	if err != nil {
-		return err
+	tenantID := r.GetTenantID(ctx)
+	if tenantID == 0 {
+		return fmt.Errorf("missing tenant_id in context")
 	}
 	
 	merchant.TenantID = tenantID
@@ -57,7 +58,7 @@ func (r *merchantRepository) Create(ctx context.Context, merchant *types.Merchan
 		merchant.Status = types.MerchantStatusPending
 	}
 	
-	_, err = r.Insert(ctx, merchant)
+	_, err := r.Insert(ctx, merchant)
 	return err
 }
 
@@ -102,9 +103,9 @@ func (r *merchantRepository) GetByCode(ctx context.Context, code string) (*types
 // GetByTenantID 根据租户ID获取所有商户
 func (r *merchantRepository) GetByTenantID(ctx context.Context, tenantID uint64) ([]*types.Merchant, error) {
 	// 验证请求的租户ID是否与上下文中的租户ID一致
-	contextTenantID, err := r.GetTenantID(ctx)
-	if err != nil {
-		return nil, err
+	contextTenantID := r.GetTenantID(ctx)
+	if contextTenantID == 0 {
+		return nil, fmt.Errorf("missing tenant_id in context")
 	}
 	
 	if contextTenantID != tenantID {

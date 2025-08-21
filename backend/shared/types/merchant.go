@@ -130,11 +130,15 @@ type Product struct {
 	MerchantID   uint64         `json:"merchant_id" db:"merchant_id"`
 	Name         string         `json:"name" db:"name"`
 	Description  string         `json:"description" db:"description"`
+	CategoryID   *uint64        `json:"category_id,omitempty" db:"category_id"`
+	Tags         StringArray    `json:"tags" db:"tags"`
 	PriceAmount  float64        `json:"price_amount" db:"price_amount"`
 	PriceCurrency string        `json:"price_currency" db:"price_currency"`
 	RightsCost   float64        `json:"rights_cost" db:"rights_cost"`
 	InventoryInfo *InventoryInfo `json:"inventory_info" db:"inventory_info"`
+	Images       ProductImages  `json:"images" db:"images"`
 	Status       ProductStatus  `json:"status" db:"status"`
+	Version      int           `json:"version" db:"version"`
 	CreatedAt    time.Time      `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at" db:"updated_at"`
 }

@@ -18,7 +18,7 @@ type UserRepository struct {
 // NewUserRepository 创建用户仓储实例
 func NewUserRepository() *UserRepository {
 	return &UserRepository{
-		BaseRepository: NewBaseRepository("users"),
+		BaseRepository: NewBaseRepository(),
 	}
 }
 
@@ -105,9 +105,9 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*types.
 
 // Create 创建用户（自动添加租户ID）
 func (r *UserRepository) Create(ctx context.Context, user *types.User) error {
-	tenantID, err := r.GetTenantID(ctx)
-	if err != nil {
-		return err
+	tenantID := r.GetTenantID(ctx)
+	if tenantID == 0 {
+		return fmt.Errorf("missing tenant_id in context")
 	}
 
 	// 检查用户名是否在当前租户下已存在
@@ -156,6 +156,7 @@ func (r *UserRepository) DeleteByID(ctx context.Context, id uint64) error {
 
 // FindAllByTenant 查找租户下的所有用户
 func (r *UserRepository) FindAllByTenant(ctx context.Context) ([]*types.User, error) {
+	
 	records, err := r.FindAll(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -217,9 +218,6 @@ func (r *UserRepository) FindByUsernameAndTenant(ctx context.Context, username s
 	}
 	
 	record, err := model.Where("username = ? AND tenant_id = ?", username, tenantID).One()
-	if err != nil {
-		return nil, err
-	}
 
 	if record.IsEmpty() {
 		return nil, fmt.Errorf("用户不存在: %s", username)
@@ -242,9 +240,6 @@ func (r *UserRepository) FindByEmailAndTenant(ctx context.Context, email string,
 	}
 	
 	record, err := model.Where("email = ? AND tenant_id = ?", email, tenantID).One()
-	if err != nil {
-		return nil, err
-	}
 
 	if record.IsEmpty() {
 		return nil, fmt.Errorf("用户不存在: %s", email)
@@ -265,9 +260,6 @@ func (r *UserRepository) FindByIDAndTenant(ctx context.Context, userID, tenantID
 		return nil, err
 	}
 	record, err := model.Where("id = ? AND tenant_id = ?", userID, tenantID).One()
-	if err != nil {
-		return nil, err
-	}
 
 	if record.IsEmpty() {
 		return nil, fmt.Errorf("用户不存在: %d", userID)
@@ -370,9 +362,9 @@ func (r *UserRepository) CreateMerchantUser(ctx context.Context, user *types.Use
 		return err
 	}
 
-	tenantID, err := r.GetTenantID(ctx)
-	if err != nil {
-		return err
+	tenantID := r.GetTenantID(ctx)
+	if tenantID == 0 {
+		return fmt.Errorf("missing tenant_id in context")
 	}
 
 	// 检查用户名在当前租户+商户下是否已存在
@@ -478,15 +470,17 @@ func (r *UserRepository) FindMerchantUsers(ctx context.Context, merchantID uint6
 
 // FindMerchantUserByID 根据ID查找商户用户
 func (r *UserRepository) FindMerchantUserByID(ctx context.Context, userID, merchantID uint64) (*types.User, error) {
+	tenantID := r.GetTenantID(ctx)
+	if tenantID == 0 {
+		return nil, fmt.Errorf("missing tenant_id in context")
+	}
+	
 	model, err := r.Model(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	record, err := model.Where("id = ? AND merchant_id = ?", userID, merchantID).One()
-	if err != nil {
-		return nil, err
-	}
 
 	if record.IsEmpty() {
 		return nil, fmt.Errorf("商户用户不存在: %d", userID)
@@ -562,9 +556,9 @@ func (r *UserRepository) MerchantUserExists(ctx context.Context, field string, v
 
 // GetMerchantUserRoles 获取商户用户角色列表
 func (r *UserRepository) GetMerchantUserRoles(ctx context.Context, userID, merchantID uint64) ([]types.RoleType, error) {
-	tenantID, err := r.GetTenantID(ctx)
-	if err != nil {
-		return nil, err
+	tenantID := r.GetTenantID(ctx)
+	if tenantID == 0 {
+		return nil, fmt.Errorf("missing tenant_id in context")
 	}
 
 	// 从user_roles表查询商户用户角色
@@ -589,9 +583,9 @@ func (r *UserRepository) GetMerchantUserRoles(ctx context.Context, userID, merch
 
 // AssignMerchantUserRole 为商户用户分配角色
 func (r *UserRepository) AssignMerchantUserRole(ctx context.Context, userID, merchantID uint64, roleType types.RoleType) error {
-	tenantID, err := r.GetTenantID(ctx)
-	if err != nil {
-		return err
+	tenantID := r.GetTenantID(ctx)
+	if tenantID == 0 {
+		return fmt.Errorf("missing tenant_id in context")
 	}
 
 	// 检查角色是否已存在

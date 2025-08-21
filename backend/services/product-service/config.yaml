@@ -1,0 +1,41 @@
+# 商品服务配置
+server:
+  name: "product-service"
+  address: ":8083"
+  logPath: "./logs"
+  logLevel: "all"
+  
+# 数据库配置
+database:
+  default:
+    host: "127.0.0.1"
+    port: "3306"
+    user: "mer_user"
+    pass: "mer_password"
+    name: "mer_system"
+    type: "mysql"
+    charset: "utf8mb4"
+    parseTime: true
+    loc: "Local"
+    maxIdle: 10
+    maxOpen: 100
+    maxLifetime: "30s"
+
+# Redis配置
+redis:
+  default:
+    address: "127.0.0.1:6379"
+    db: 0
+    pass: ""
+    
+# JWT配置
+jwt:
+  secret: "your-jwt-secret-key-here"
+  expire: 7200
+
+# OSS配置
+oss:
+  accessKeyId: "your-access-key-id"
+  accessKeySecret: "your-access-key-secret"
+  endpoint: "https://your-region.aliyuncs.com"
+  bucket: "your-bucket-name"

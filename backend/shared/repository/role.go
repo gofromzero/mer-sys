@@ -70,7 +70,7 @@ type roleRepository struct {
 // NewRoleRepository 创建角色管理仓储实例
 func NewRoleRepository() RoleRepository {
 	return &roleRepository{
-		BaseRepository: NewBaseRepository("user_roles"),
+		BaseRepository: NewBaseRepository(),
 	}
 }
 

@@ -24,7 +24,7 @@ type TenantRepository struct {
 // NewTenantRepository 创建租户仓储实例
 func NewTenantRepository() ITenantRepository {
 	return &TenantRepository{
-		BaseRepository: NewBaseRepository("tenants"),
+		BaseRepository: NewBaseRepository(),
 	}
 }
 

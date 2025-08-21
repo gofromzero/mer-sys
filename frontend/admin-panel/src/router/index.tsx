@@ -17,6 +17,7 @@ import {
   AlertListPage, 
   UsageReportPage 
 } from '../pages/monitoring';
+import { ProductListPage, CategoryManagePage } from '../pages/merchant/products';
 
 export const router = createBrowserRouter([
   {
@@ -66,6 +67,14 @@ export const router = createBrowserRouter([
           {
             path: 'register',
             element: <MerchantRegistrationPage />,
+          },
+          {
+            path: 'products',
+            element: <ProductListPage />,
+          },
+          {
+            path: 'categories',
+            element: <CategoryManagePage />,
           },
         ],
       },
