@@ -1,0 +1,20 @@
+schema: 1
+story: '2.4'
+gate: CONCERNS
+status_reason: '权益监控功能实现良好，但存在一些需要改进的技术问题。'
+reviewer: 'Quinn'
+updated: '2025-08-21T10:15:00Z'
+top_issues:
+  - id: 'TEST-001'
+    severity: medium
+    finding: '后端测试配置问题导致监控Repository测试失败'
+    suggested_action: '修复Go workspace测试路径配置，确保监控模块测试可正常运行'
+  - id: 'ARCH-001'
+    severity: medium
+    finding: '前端存在React Router未来版本兼容性警告'
+    suggested_action: '更新React Router配置以支持v7未来特性'
+  - id: 'REL-001'
+    severity: low
+    finding: '前端仪表板在API调用失败时的错误处理需要优化'
+    suggested_action: '增强错误重试机制和用户友好的错误提示'
+waiver: { active: false }

@@ -32,11 +32,14 @@ type BusinessInfo struct {
 
 // RightsBalance 权益余额信息
 type RightsBalance struct {
-	TotalBalance     float64   `json:"total_balance"`     // 总余额
-	UsedBalance      float64   `json:"used_balance"`      // 已使用余额
-	FrozenBalance    float64   `json:"frozen_balance"`    // 冻结余额
-	AvailableBalance float64   `json:"available_balance"` // 可用余额
-	LastUpdated      time.Time `json:"last_updated"`      // 最后更新时间
+	TotalBalance      float64   `json:"total_balance"`      // 总余额
+	UsedBalance       float64   `json:"used_balance"`       // 已使用余额
+	FrozenBalance     float64   `json:"frozen_balance"`     // 冻结余额
+	AvailableBalance  float64   `json:"available_balance"`  // 可用余额
+	LastUpdated       time.Time `json:"last_updated"`       // 最后更新时间
+	WarningThreshold  *float64  `json:"warning_threshold"`  // 预警阈值
+	CriticalThreshold *float64  `json:"critical_threshold"` // 紧急阈值
+	TrendCoefficient  *float64  `json:"trend_coefficient"`  // 趋势系数
 }
 
 // UpdateAvailableBalance 更新可用余额

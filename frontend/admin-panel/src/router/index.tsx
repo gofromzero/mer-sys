@@ -11,6 +11,12 @@ import { MerchantUserFormPage } from '../pages/merchant-user/MerchantUserFormPag
 import { MerchantUserBatchCreatePage } from '../pages/merchant-user/MerchantUserBatchCreatePage';
 import { MerchantUserStatusManagePage } from '../pages/merchant-user/MerchantUserStatusManagePage';
 import { MerchantUserAuditLogPage } from '../pages/merchant-user/MerchantUserAuditLogPage';
+import { 
+  RightsMonitoringDashboard, 
+  AlertConfigurationPage, 
+  AlertListPage, 
+  UsageReportPage 
+} from '../pages/monitoring';
 
 export const router = createBrowserRouter([
   {
@@ -93,6 +99,40 @@ export const router = createBrowserRouter([
           {
             path: 'audit-log',
             element: <MerchantUserAuditLogPage />,
+          },
+        ],
+      },
+      {
+        path: 'monitoring',
+        children: [
+          {
+            index: true,
+            element: <RightsMonitoringDashboard />,
+          },
+          {
+            path: 'dashboard',
+            element: <RightsMonitoringDashboard />,
+          },
+          {
+            path: 'alerts',
+            children: [
+              {
+                index: true,
+                element: <AlertListPage />,
+              },
+              {
+                path: 'list',
+                element: <AlertListPage />,
+              },
+              {
+                path: 'config',
+                element: <AlertConfigurationPage />,
+              },
+            ],
+          },
+          {
+            path: 'reports',
+            element: <UsageReportPage />,
           },
         ],
       },
