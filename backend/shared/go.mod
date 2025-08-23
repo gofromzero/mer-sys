@@ -6,6 +6,7 @@ require (
 	github.com/gogf/gf/contrib/drivers/mysql/v2 v2.9.0
 	github.com/gogf/gf/v2 v2.9.0
 	github.com/smartystreets/goconvey v1.8.1
+	golang.org/x/crypto v0.40.0
 )
 
 require (

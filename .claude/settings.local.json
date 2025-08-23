@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npm run build:*)",
       "Bash(npm install)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(go test:*)",
+      "Bash(go build:*)"
     ]
   },
   "outputStyle": "default"

@@ -1,0 +1,32 @@
+schema: 1
+story: '3.1'
+gate: CONCERNS
+status_reason: '核心功能完整，存在需解决的构建和集成问题'
+reviewer: 'Quinn'
+updated: '2025-08-21T10:15:00Z'
+top_issues:
+  - id: 'BUILD-001'
+    severity: high
+    finding: '前端TypeScript构建失败，存在大量类型错误和依赖问题'
+    suggested_action: '修复TypeScript配置、类型导入和缺失依赖问题'
+  - id: 'ARCH-001'
+    severity: medium
+    finding: 'Go后端存在类型重复定义（EnhancedProduct vs Product）'
+    suggested_action: '统一商品数据模型，移除重复类型定义'
+  - id: 'TEST-001'
+    severity: medium
+    finding: '缺少Repository和Service层的单元测试覆盖'
+    suggested_action: '补充多租户隔离、CRUD操作和业务逻辑测试'
+  - id: 'REQ-001'
+    severity: medium
+    finding: 'OSS图片上传功能缺少实际配置和集成测试'
+    suggested_action: '完成OSS配置，实现图片上传端到端测试'
+  - id: 'PERF-001'
+    severity: low
+    finding: '分类树查询缺少缓存优化机制'
+    suggested_action: '实施Redis缓存策略以优化分类查询性能'
+  - id: 'SEC-001'
+    severity: low
+    finding: '批量操作接口缺少API限流机制'
+    suggested_action: '添加API限流中间件防止滥用'
+waiver: { active: false }
