@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gofromzero/mer-sys/backend/shared/types"
+	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/frame/g"
 )
 
@@ -334,4 +335,216 @@ func (r *ProductRepository) AddImage(ctx context.Context, productID uint64, imag
 	return r.Update(ctx, productID, map[string]interface{}{
 		"images": product.Images,
 	})
+}
+
+// UpdateInventoryInfo 更新商品库存信息
+func (r *ProductRepository) UpdateInventoryInfo(ctx context.Context, productID uint64, inventoryInfo types.ExtendedInventoryInfo) error {
+	tenantID := r.GetTenantID(ctx)
+	merchantID := r.GetMerchantID(ctx)
+	if tenantID == 0 || merchantID == 0 {
+		return fmt.Errorf("missing tenant_id or merchant_id in context")
+	}
+	
+	return r.Update(ctx, productID, map[string]interface{}{
+		"inventory_info": inventoryInfo,
+	})
+}
+
+// GetInventoryInfo 获取商品库存信息  
+func (r *ProductRepository) GetInventoryInfo(ctx context.Context, productID uint64) (*types.ExtendedInventoryInfo, error) {
+	product, err := r.GetByID(ctx, productID)
+	if err != nil {
+		return nil, err
+	}
+	
+	if product.InventoryInfo == nil {
+		return nil, fmt.Errorf("商品库存信息为空")
+	}
+	
+	// 转换为扩展库存信息
+	extendedInfo := &types.ExtendedInventoryInfo{
+		StockQuantity:    product.InventoryInfo.StockQuantity,
+		ReservedQuantity: product.InventoryInfo.ReservedQuantity,
+		TrackInventory:   product.InventoryInfo.TrackInventory,
+	}
+	
+	return extendedInfo, nil
+}
+
+// AdjustInventory 调整商品库存（原子操作）
+func (r *ProductRepository) AdjustInventory(ctx context.Context, productID uint64, adjustment int, reason string) (*types.ExtendedInventoryInfo, error) {
+	tenantID := r.GetTenantID(ctx)
+	merchantID := r.GetMerchantID(ctx)
+	if tenantID == 0 || merchantID == 0 {
+		return nil, fmt.Errorf("missing tenant_id or merchant_id in context")
+	}
+	
+	// 在事务中执行库存调整
+	tx, err := g.DB().Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+	
+	// 获取当前库存信息（行级锁）
+	var product types.Product
+	err = tx.Model("products").
+		Where("id = ? AND tenant_id = ? AND merchant_id = ?", productID, tenantID, merchantID).
+		LockUpdate().
+		Scan(&product)
+	if err != nil {
+		return nil, err
+	}
+	
+	if product.ID == 0 {
+		return nil, fmt.Errorf("product not found")
+	}
+	
+	// 计算新的库存数量
+	oldQuantity := product.InventoryInfo.StockQuantity
+	newQuantity := oldQuantity + adjustment
+	
+	// 检查库存不能为负数
+	if newQuantity < 0 {
+		return nil, fmt.Errorf("insufficient inventory: current=%d, adjustment=%d", oldQuantity, adjustment)
+	}
+	
+	// 更新库存
+	product.InventoryInfo.StockQuantity = newQuantity
+	_, err = tx.Model("products").
+		Where("id = ? AND tenant_id = ? AND merchant_id = ?", productID, tenantID, merchantID).
+		Update(g.Map{
+			"inventory_info": product.InventoryInfo,
+			"version": gdb.Raw("version + 1"),
+		})
+	if err != nil {
+		return nil, err
+	}
+	
+	// 转换为扩展库存信息
+	extendedInfo := &types.ExtendedInventoryInfo{
+		StockQuantity:    product.InventoryInfo.StockQuantity,
+		ReservedQuantity: product.InventoryInfo.ReservedQuantity,
+		TrackInventory:   product.InventoryInfo.TrackInventory,
+	}
+	
+	return extendedInfo, nil
+}
+
+// ReserveInventory 预留库存
+func (r *ProductRepository) ReserveInventory(ctx context.Context, productID uint64, quantity int) error {
+	tenantID := r.GetTenantID(ctx)
+	merchantID := r.GetMerchantID(ctx)
+	if tenantID == 0 || merchantID == 0 {
+		return fmt.Errorf("missing tenant_id or merchant_id in context")
+	}
+	
+	// 在事务中执行库存预留
+	return g.DB().Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		// 获取当前库存信息（行级锁）
+		var product types.Product
+		err := tx.Model("products").
+			Where("id = ? AND tenant_id = ? AND merchant_id = ?", productID, tenantID, merchantID).
+			LockUpdate().
+			Scan(&product)
+		if err != nil {
+			return err
+		}
+		
+		if product.ID == 0 {
+			return fmt.Errorf("product not found")
+		}
+		
+		// 检查可用库存
+		availableStock := product.InventoryInfo.StockQuantity - product.InventoryInfo.ReservedQuantity
+		if availableStock < quantity {
+			return fmt.Errorf("insufficient available inventory: available=%d, requested=%d", availableStock, quantity)
+		}
+		
+		// 增加预留数量
+		product.InventoryInfo.ReservedQuantity += quantity
+		
+		// 更新库存信息
+		_, err = tx.Model("products").
+			Where("id = ? AND tenant_id = ? AND merchant_id = ?", productID, tenantID, merchantID).
+			Update(g.Map{
+				"inventory_info": product.InventoryInfo,
+				"version": gdb.Raw("version + 1"),
+			})
+		
+		return err
+	})
+}
+
+// ReleaseInventory 释放预留库存
+func (r *ProductRepository) ReleaseInventory(ctx context.Context, productID uint64, quantity int) error {
+	tenantID := r.GetTenantID(ctx)
+	merchantID := r.GetMerchantID(ctx)
+	if tenantID == 0 || merchantID == 0 {
+		return fmt.Errorf("missing tenant_id or merchant_id in context")
+	}
+	
+	// 在事务中执行库存释放
+	return g.DB().Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		// 获取当前库存信息（行级锁）
+		var product types.Product
+		err := tx.Model("products").
+			Where("id = ? AND tenant_id = ? AND merchant_id = ?", productID, tenantID, merchantID).
+			LockUpdate().
+			Scan(&product)
+		if err != nil {
+			return err
+		}
+		
+		if product.ID == 0 {
+			return fmt.Errorf("product not found")
+		}
+		
+		// 检查预留数量是否足够
+		if product.InventoryInfo.ReservedQuantity < quantity {
+			return fmt.Errorf("insufficient reserved inventory: reserved=%d, release=%d", product.InventoryInfo.ReservedQuantity, quantity)
+		}
+		
+		// 减少预留数量
+		product.InventoryInfo.ReservedQuantity -= quantity
+		
+		// 更新库存信息
+		_, err = tx.Model("products").
+			Where("id = ? AND tenant_id = ? AND merchant_id = ?", productID, tenantID, merchantID).
+			Update(g.Map{
+				"inventory_info": product.InventoryInfo,
+				"version": gdb.Raw("version + 1"),
+			})
+		
+		return err
+	})
+}
+
+// GetLowStockProducts 获取低库存商品
+func (r *ProductRepository) GetLowStockProducts(ctx context.Context) ([]types.Product, error) {
+	tenantID := r.GetTenantID(ctx)
+	merchantID := r.GetMerchantID(ctx)
+	if tenantID == 0 || merchantID == 0 {
+		return nil, fmt.Errorf("missing tenant_id or merchant_id in context")
+	}
+	
+	var products []types.Product
+	err := g.DB().Model("products").
+		Ctx(ctx).
+		Where("tenant_id = ? AND merchant_id = ?", tenantID, merchantID).
+		Where("status != ?", types.ProductStatusDeleted).
+		Where("JSON_EXTRACT(inventory_info, '$.track_inventory') = true").
+		Where("JSON_EXTRACT(inventory_info, '$.stock_quantity') - JSON_EXTRACT(inventory_info, '$.reserved_quantity') <= COALESCE(JSON_EXTRACT(inventory_info, '$.low_stock_threshold'), 0)").
+		Scan(&products)
+	if err != nil {
+		return nil, err
+	}
+	
+	return products, nil
 }

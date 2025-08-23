@@ -17,7 +17,15 @@ import {
   AlertListPage, 
   UsageReportPage 
 } from '../pages/monitoring';
-import { ProductListPage, CategoryManagePage } from '../pages/merchant/products';
+import { 
+  ProductListPage, 
+  CategoryManagePage,
+  InventoryHistoryPage,
+  InventoryMonitoringPage,
+  InventoryAlertPage,
+  InventoryBatchPage,
+  InventoryStocktakingPage
+} from '../pages/merchant/products';
 
 export const router = createBrowserRouter([
   {
@@ -75,6 +83,35 @@ export const router = createBrowserRouter([
           {
             path: 'categories',
             element: <CategoryManagePage />,
+          },
+          {
+            path: 'inventory',
+            children: [
+              {
+                index: true,
+                element: <InventoryMonitoringPage />,
+              },
+              {
+                path: 'monitoring',
+                element: <InventoryMonitoringPage />,
+              },
+              {
+                path: 'history',
+                element: <InventoryHistoryPage />,
+              },
+              {
+                path: 'alerts',
+                element: <InventoryAlertPage />,
+              },
+              {
+                path: 'batch',
+                element: <InventoryBatchPage />,
+              },
+              {
+                path: 'stocktaking',
+                element: <InventoryStocktakingPage />,
+              },
+            ],
           },
         ],
       },

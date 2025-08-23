@@ -241,7 +241,7 @@ func (s *OrderPricingService) ValidateOrderPricing(ctx context.Context, result *
 		calculatedTotal += item.TotalPrice.Amount
 	}
 
-	if abs(calculatedTotal-result.TotalEffectiveAmount.Amount) > 0.01 {
+	if absFloat(calculatedTotal-result.TotalEffectiveAmount.Amount) > 0.01 {
 		return gerror.Newf("订单总金额不一致: 计算值%.2f, 实际值%.2f", 
 			calculatedTotal, result.TotalEffectiveAmount.Amount)
 	}
@@ -261,7 +261,7 @@ func (s *OrderPricingService) ValidateOrderPricing(ctx context.Context, result *
 	rightsToMoneyRate := 0.01 // 1权益点 = 0.01元
 	totalPayment := result.TotalCashPayment.Amount + (result.TotalRightsPayment * rightsToMoneyRate)
 	
-	if abs(totalPayment-result.TotalEffectiveAmount.Amount) > 0.01 {
+	if absFloat(totalPayment-result.TotalEffectiveAmount.Amount) > 0.01 {
 		return gerror.Newf("支付金额不匹配: 总支付%.2f, 订单金额%.2f", 
 			totalPayment, result.TotalEffectiveAmount.Amount)
 	}
@@ -328,8 +328,8 @@ func (s *OrderPricingService) logPricingDecision(ctx context.Context, result *Or
 	g.Log().Infof(ctx, "订单定价决策: %+v", logData)
 }
 
-// abs 返回浮点数的绝对值
-func abs(x float64) float64 {
+// absFloat 返回浮点数的绝对值
+func absFloat(x float64) float64 {
 	if x < 0 {
 		return -x
 	}

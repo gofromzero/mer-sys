@@ -22,8 +22,8 @@ const InventoryDisplay: React.FC<InventoryDisplayProps> = ({
     
     if (available <= 0) {
       return { label: '缺货', color: 'text-red-600' };
-    } else if (available <= 10) {
-      return { label: '库存紧张', color: 'text-orange-600' };
+    } else if (inventory.low_stock_threshold && available <= inventory.low_stock_threshold) {
+      return { label: '库存不足', color: 'text-orange-600' };
     } else {
       return { label: '库存充足', color: 'text-green-600' };
     }
