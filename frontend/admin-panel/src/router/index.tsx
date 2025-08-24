@@ -26,6 +26,10 @@ import {
   InventoryBatchPage,
   InventoryStocktakingPage
 } from '../pages/merchant/products';
+import CartPage from '../pages/customer/cart/CartPage';
+import OrderListPage from '../pages/customer/orders/OrderListPage';
+import OrderDetailPage from '../pages/customer/orders/OrderDetailPage';
+import OrderFormPage from '../pages/customer/orders/OrderFormPage';
 
 export const router = createBrowserRouter([
   {
@@ -179,6 +183,31 @@ export const router = createBrowserRouter([
           {
             path: 'reports',
             element: <UsageReportPage />,
+          },
+        ],
+      },
+      {
+        path: 'cart',
+        element: <CartPage />,
+      },
+      {
+        path: 'orders',
+        children: [
+          {
+            index: true,
+            element: <OrderListPage />,
+          },
+          {
+            path: 'list',
+            element: <OrderListPage />,
+          },
+          {
+            path: 'create',
+            element: <OrderFormPage />,
+          },
+          {
+            path: ':id',
+            element: <OrderDetailPage />,
           },
         ],
       },

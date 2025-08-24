@@ -1,0 +1,57 @@
+# Order Service Configuration
+server:
+  address:     ":8084"
+  serverRoot:  "resource/public"
+  
+database:
+  link: "mysql:mer_user:mer_password@tcp(127.0.0.1:3306)/mer_system"
+  debug: true
+  
+redis:
+  address: "127.0.0.1:6379"
+  db: 1
+  
+# 支付配置
+payment:
+  alipay:
+    app_id: ""
+    private_key: ""
+    public_key: ""
+    sign_type: "RSA2"
+    charset: "utf-8"
+    gateway_url: "https://openapi.alipay.com/gateway.do"
+    notify_url: "http://localhost:8084/api/v1/payments/callback/alipay"
+    return_url: "http://localhost:3000/payment/success"
+
+# 短信配置
+sms:
+  enabled: false  # 开发环境设为false，使用Mock模式
+  aliyun:
+    access_key_id: ""
+    access_key_secret: ""
+    sign_name: "多租户商户平台"
+    region: "cn-hangzhou"
+
+# 邮件配置
+email:
+  enabled: false  # 开发环境设为false，使用Mock模式
+  smtp:
+    host: "smtp.example.com"
+    port: "587"
+    username: ""
+    password: ""
+  from: "noreply@example.com"
+
+# 外部服务配置
+external_services:
+  product_service:
+    url: "http://localhost:8081"
+  fund_service:
+    url: "http://localhost:8082"
+  user_service:
+    url: "http://localhost:8080"
+    
+# JWT配置
+jwt:
+  sign_key: "mer_system_jwt_secret_key_2023"
+  expire: 7200
