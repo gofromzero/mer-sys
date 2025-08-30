@@ -22,7 +22,7 @@ const OrderDetailPage: React.FC = () => {
         type: 'service',
         api: {
           method: 'get',
-          url: `/api/v1/orders/${orderId}`,
+          url: `/api/v1/orders/${orderId}/detail`,
         },
         body: [
           {
@@ -43,11 +43,11 @@ const OrderDetailPage: React.FC = () => {
                       type: 'mapping',
                       source: '${status}',
                       map: {
-                        pending: '<span class="label label-warning">待支付</span>',
-                        paid: '<span class="label label-info">已支付</span>',
-                        processing: '<span class="label label-primary">处理中</span>',
-                        completed: '<span class="label label-success">已完成</span>',
-                        cancelled: '<span class="label label-default">已取消</span>',
+                        1: '<span class="label label-warning">待支付</span>',
+                        2: '<span class="label label-info">已支付</span>',
+                        3: '<span class="label label-primary">处理中</span>',
+                        4: '<span class="label label-success">已完成</span>',
+                        5: '<span class="label label-default">已取消</span>',
                       },
                     },
                   },
@@ -180,6 +180,65 @@ const OrderDetailPage: React.FC = () => {
             ],
           },
           {
+            type: 'panel',
+            title: '订单状态历史',
+            body: [
+              {
+                type: 'table',
+                source: '${status_history}',
+                placeholder: '暂无状态变更记录',
+                columns: [
+                  {
+                    name: 'from_status',
+                    label: '原状态',
+                    type: 'mapping',
+                    map: {
+                      1: '待支付',
+                      2: '已支付',
+                      3: '处理中',
+                      4: '已完成',
+                      5: '已取消',
+                    },
+                  },
+                  {
+                    name: 'to_status',
+                    label: '新状态',
+                    type: 'mapping',
+                    map: {
+                      1: '<span class="label label-warning">待支付</span>',
+                      2: '<span class="label label-info">已支付</span>',
+                      3: '<span class="label label-primary">处理中</span>',
+                      4: '<span class="label label-success">已完成</span>',
+                      5: '<span class="label label-default">已取消</span>',
+                    },
+                  },
+                  {
+                    name: 'reason',
+                    label: '变更原因',
+                    type: 'text',
+                  },
+                  {
+                    name: 'operator_type',
+                    label: '操作者',
+                    type: 'mapping',
+                    map: {
+                      customer: '<span class="label label-info">客户</span>',
+                      merchant: '<span class="label label-success">商户</span>',
+                      system: '<span class="label label-default">系统</span>',
+                      admin: '<span class="label label-primary">管理员</span>',
+                    },
+                  },
+                  {
+                    name: 'created_at',
+                    label: '变更时间',
+                    type: 'datetime',
+                    format: 'YYYY-MM-DD HH:mm:ss',
+                  },
+                ],
+              },
+            ],
+          },
+          {
             type: 'divider',
           },
           {
@@ -190,7 +249,7 @@ const OrderDetailPage: React.FC = () => {
                 label: '支付订单',
                 level: 'primary',
                 size: 'lg',
-                visibleOn: '${status === "pending"}',
+                visibleOn: '${status == 1}',
                 onEvent: {
                   click: {
                     actions: [
@@ -250,7 +309,7 @@ const OrderDetailPage: React.FC = () => {
                 type: 'button',
                 label: '取消订单',
                 level: 'danger',
-                visibleOn: '${status === "pending"}',
+                visibleOn: '${status == 1}',
                 confirmText: '确认取消这个订单吗？',
                 onEvent: {
                   click: {
@@ -270,7 +329,7 @@ const OrderDetailPage: React.FC = () => {
                 type: 'button',
                 label: '查询支付状态',
                 level: 'info',
-                visibleOn: '${status === "pending" || status === "paid"}',
+                visibleOn: '${status == 1 || status == 2}',
                 onEvent: {
                   click: {
                     actions: [

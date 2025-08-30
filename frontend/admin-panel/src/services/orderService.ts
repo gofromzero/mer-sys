@@ -70,4 +70,83 @@ export const orderService = {
     const response = await apiClient.post('/orders/preview', data);
     return response.data;
   },
+
+  // 获取订单详情（包含状态历史）
+  async getOrderWithHistory(orderId: number): Promise<Order> {
+    const response = await apiClient.get(`/orders/${orderId}/detail`);
+    return response.data;
+  },
+
+  // 获取订单状态历史
+  async getOrderStatusHistory(orderId: number, params?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    items: Array<{
+      id: number;
+      order_id: number;
+      from_status: number;
+      to_status: number;
+      reason: string;
+      operator_type: string;
+      operator_id?: number;
+      created_at: string;
+    }>;
+    total: number;
+  }> {
+    const response = await apiClient.get(`/orders/${orderId}/status-history`, { params });
+    return response.data;
+  },
+
+  // 高级订单查询
+  async queryOrders(params: {
+    merchant_id?: number;
+    customer_id?: number;
+    status?: number[];
+    start_date?: string;
+    end_date?: string;
+    search_keyword?: string;
+    page?: number;
+    page_size?: number;
+    sort_by?: string;
+    sort_order?: string;
+  }): Promise<{
+    items: Order[];
+    total: number;
+    page: number;
+    page_size: number;
+    has_next: boolean;
+  }> {
+    const response = await apiClient.get('/orders/query', { params });
+    return response.data;
+  },
+
+  // 搜索订单
+  async searchOrders(keyword: string, params?: {
+    page?: number;
+    page_size?: number;
+  }): Promise<{
+    items: Order[];
+    total: number;
+    page: number;
+    page_size: number;
+  }> {
+    const response = await apiClient.get('/orders/search', { 
+      params: { q: keyword, ...params } 
+    });
+    return response.data;
+  },
+
+  // 获取订单统计信息
+  async getOrderStats(params?: {
+    merchant_id?: number;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<{
+    total: number;
+    by_status: Record<string, number>;
+  }> {
+    const response = await apiClient.get('/orders/stats', { params });
+    return response.data;
+  },
 };

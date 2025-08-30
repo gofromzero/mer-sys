@@ -187,21 +187,156 @@ type VerificationInfo struct {
 	VerifiedBy       string     `json:"verified_by,omitempty"`
 }
 
-// Order 订单实体
+// OrderStatusOperatorType 操作员类型枚举
+type OrderStatusOperatorType string
+
+const (
+	OrderStatusOperatorTypeCustomer OrderStatusOperatorType = "customer"
+	OrderStatusOperatorTypeMerchant OrderStatusOperatorType = "merchant"
+	OrderStatusOperatorTypeSystem   OrderStatusOperatorType = "system"
+	OrderStatusOperatorTypeAdmin    OrderStatusOperatorType = "admin"
+)
+
+// String 返回操作员类型的字符串表示
+func (ot OrderStatusOperatorType) String() string {
+	return string(ot)
+}
+
+// IsValid 验证操作员类型是否有效
+func (ot OrderStatusOperatorType) IsValid() bool {
+	switch ot {
+	case OrderStatusOperatorTypeCustomer, OrderStatusOperatorTypeMerchant, 
+		 OrderStatusOperatorTypeSystem, OrderStatusOperatorTypeAdmin:
+		return true
+	default:
+		return false
+	}
+}
+
+// OrderStatusHistory 订单状态变更历史记录
+type OrderStatusHistory struct {
+	ID           uint64                  `json:"id" db:"id"`
+	TenantID     uint64                  `json:"tenant_id" db:"tenant_id"`
+	OrderID      uint64                  `json:"order_id" db:"order_id"`
+	FromStatus   OrderStatusInt          `json:"from_status" db:"from_status"`
+	ToStatus     OrderStatusInt          `json:"to_status" db:"to_status"`
+	Reason       string                  `json:"reason" db:"reason"`
+	OperatorID   *uint64                 `json:"operator_id,omitempty" db:"operator_id"`
+	OperatorType OrderStatusOperatorType `json:"operator_type" db:"operator_type"`
+	Metadata     interface{}             `json:"metadata,omitempty" db:"metadata"`
+	CreatedAt    time.Time               `json:"created_at" db:"created_at"`
+}
+
+// OrderTimeoutConfig 订单超时配置
+type OrderTimeoutConfig struct {
+	ID                      uint64 `json:"id" db:"id"`
+	TenantID                uint64 `json:"tenant_id" db:"tenant_id"`
+	MerchantID              *uint64 `json:"merchant_id,omitempty" db:"merchant_id"`
+	PaymentTimeoutMinutes   int    `json:"payment_timeout_minutes" db:"payment_timeout_minutes"`
+	ProcessingTimeoutHours  int    `json:"processing_timeout_hours" db:"processing_timeout_hours"`
+	AutoCompleteEnabled     bool   `json:"auto_complete_enabled" db:"auto_complete_enabled"`
+	CreatedAt               time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt               time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// OrderTimeoutStatistics 订单超时统计信息
+type OrderTimeoutStatistics struct {
+	PendingTimeoutCount       int     `json:"pending_timeout_count"`       // 待支付超时订单数量
+	PendingTimeoutAmount      float64 `json:"pending_timeout_amount"`      // 待支付超时订单金额
+	ProcessingTimeoutCount    int     `json:"processing_timeout_count"`    // 处理中超时订单数量
+	ProcessingTimeoutAmount   float64 `json:"processing_timeout_amount"`   // 处理中超时订单金额
+	TodayAutoCancelledCount   int     `json:"today_auto_cancelled_count"`  // 今日自动取消订单数量
+	TodayAutoCancelledAmount  float64 `json:"today_auto_cancelled_amount"` // 今日自动取消订单金额
+}
+
+// OrderQueryRequest 订单查询请求
+type OrderQueryRequest struct {
+	TenantID      uint64           `json:"tenant_id"`
+	MerchantID    *uint64          `json:"merchant_id,omitempty"`
+	CustomerID    *uint64          `json:"customer_id,omitempty"`
+	Status        []OrderStatusInt `json:"status,omitempty"`
+	StartDate     *time.Time       `json:"start_date,omitempty"`
+	EndDate       *time.Time       `json:"end_date,omitempty"`
+	SearchKeyword *string          `json:"search_keyword,omitempty"`
+	Page          int              `json:"page" v:"required|min:1"`
+	PageSize      int              `json:"page_size" v:"required|min:1|max:100"`
+	SortBy        string           `json:"sort_by" v:"in:created_at,updated_at,total_amount"`
+	SortOrder     string           `json:"sort_order" v:"in:asc,desc"`
+}
+
+// OrderListResponse 订单列表响应
+type OrderListResponse struct {
+	Items    []OrderSummary `json:"items"`
+	Total    int64         `json:"total"`
+	Page     int           `json:"page"`
+	PageSize int           `json:"page_size"`
+	HasNext  bool          `json:"has_next"`
+}
+
+// OrderSummary 订单摘要信息
+type OrderSummary struct {
+	ID                  uint64               `json:"id"`
+	OrderNumber         string               `json:"order_number"`
+	Status              OrderStatusInt       `json:"status"`
+	CustomerName        string               `json:"customer_name"`
+	MerchantName        string               `json:"merchant_name"`
+	TotalAmount         float64              `json:"total_amount"`
+	ItemCount           int                  `json:"item_count"`
+	CreatedAt           time.Time            `json:"created_at"`
+	UpdatedAt           time.Time            `json:"updated_at"`
+	LatestStatusChange  *OrderStatusHistory  `json:"latest_status_change,omitempty"`
+}
+
+// UpdateOrderStatusRequest 更新订单状态请求
+type UpdateOrderStatusRequest struct {
+	Status       OrderStatusInt          `json:"status" v:"required#新状态不能为空"`
+	Reason       string                  `json:"reason" v:"required|min:1|max:255#变更原因不能为空且不能超过255字符"`
+	OperatorType OrderStatusOperatorType `json:"operator_type" v:"required#操作员类型不能为空"`
+	Metadata     interface{}             `json:"metadata,omitempty"`
+}
+
+// BatchUpdateOrderStatusRequest 批量更新订单状态请求
+type BatchUpdateOrderStatusRequest struct {
+	OrderIDs     []uint64                `json:"order_ids" v:"required|length:1,100#订单ID列表不能为空且不能超过100个"`
+	Status       OrderStatusInt          `json:"status" v:"required#新状态不能为空"`
+	Reason       string                  `json:"reason" v:"required|min:1|max:255#变更原因不能为空且不能超过255字符"`
+	OperatorType OrderStatusOperatorType `json:"operator_type" v:"required#操作员类型不能为空"`
+	Metadata     interface{}             `json:"metadata,omitempty"`
+}
+
+// OrderStatusValidationError 订单状态验证错误
+type OrderStatusValidationError struct {
+	OrderID    uint64         `json:"order_id"`
+	FromStatus OrderStatusInt `json:"from_status"`
+	ToStatus   OrderStatusInt `json:"to_status"`
+	Message    string         `json:"message"`
+}
+
+// BatchUpdateOrderStatusResponse 批量更新订单状态响应
+type BatchUpdateOrderStatusResponse struct {
+	SuccessCount int                          `json:"success_count"`
+	FailCount    int                          `json:"fail_count"`
+	Errors       []OrderStatusValidationError `json:"errors,omitempty"`
+}
+
+// Order 订单实体（扩展支持状态历史）
 type Order struct {
-	ID              uint64            `json:"id" db:"id"`
-	TenantID        uint64            `json:"tenant_id" db:"tenant_id"`
-	MerchantID      uint64            `json:"merchant_id" db:"merchant_id"`
-	CustomerID      uint64            `json:"customer_id" db:"customer_id"`
-	OrderNumber     string            `json:"order_number" db:"order_number"`
-	Status          OrderStatus       `json:"status" db:"status"`
-	Items           []OrderItem       `json:"items" db:"items"`
-	PaymentInfo     *PaymentInfo      `json:"payment_info" db:"payment_info"`
+	ID               uint64            `json:"id" db:"id"`
+	TenantID         uint64            `json:"tenant_id" db:"tenant_id"`
+	MerchantID       uint64            `json:"merchant_id" db:"merchant_id"`
+	CustomerID       uint64            `json:"customer_id" db:"customer_id"`
+	OrderNumber      string            `json:"order_number" db:"order_number"`
+	Status           OrderStatus       `json:"status" db:"status"`
+	Items            []OrderItem       `json:"items" db:"items"`
+	PaymentInfo      *PaymentInfo      `json:"payment_info" db:"payment_info"`
 	VerificationInfo *VerificationInfo `json:"verification_info" db:"verification_info"`
-	TotalAmount     float64           `json:"total_amount" db:"total_amount"`
-	TotalRightsCost float64           `json:"total_rights_cost" db:"total_rights_cost"`
-	CreatedAt       time.Time         `json:"created_at" db:"created_at"`
-	UpdatedAt       time.Time         `json:"updated_at" db:"updated_at"`
+	TotalAmount      float64           `json:"total_amount" db:"total_amount"`
+	TotalRightsCost  float64           `json:"total_rights_cost" db:"total_rights_cost"`
+	StatusUpdatedAt  time.Time         `json:"status_updated_at" db:"status_updated_at"`
+	CreatedAt        time.Time         `json:"created_at" db:"created_at"`
+	UpdatedAt        time.Time         `json:"updated_at" db:"updated_at"`
+	// 状态历史（查询时可选填充）
+	StatusHistory    []OrderStatusHistory `json:"status_history,omitempty" db:"-"`
 }
 
 // MerchantRegistrationRequest 商户注册请求

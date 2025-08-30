@@ -13,8 +13,11 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@types/echarts": "^4.9.22",
     "amis": "^6.13.0",
     "axios": "^1.11.0",
+    "echarts": "^5.6.0",
+    "echarts-for-react": "^3.0.2",
     "mobx": "^6.13.7",
     "mobx-react-lite": "^4.1.0",
     "react": "^19.1.1",

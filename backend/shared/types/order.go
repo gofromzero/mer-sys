@@ -33,6 +33,48 @@ func (os OrderStatusInt) ToOrderStatus() OrderStatus {
 	}
 }
 
+// String 返回订单状态的字符串表示
+func (os OrderStatusInt) String() string {
+	switch os {
+	case OrderStatusIntPending:
+		return "pending"
+	case OrderStatusIntPaid:
+		return "paid"
+	case OrderStatusIntProcessing:
+		return "processing"
+	case OrderStatusIntCompleted:
+		return "completed"
+	case OrderStatusIntCancelled:
+		return "cancelled"
+	default:
+		return "pending"
+	}
+}
+
+// IsValidTransition 检查状态流转是否合法
+func (os OrderStatusInt) IsValidTransition(toStatus OrderStatusInt) bool {
+	// 定义合法的状态流转规则
+	validTransitions := map[OrderStatusInt][]OrderStatusInt{
+		OrderStatusIntPending:    {OrderStatusIntPaid, OrderStatusIntCancelled},
+		OrderStatusIntPaid:       {OrderStatusIntProcessing, OrderStatusIntCancelled},
+		OrderStatusIntProcessing: {OrderStatusIntCompleted, OrderStatusIntCancelled},
+		OrderStatusIntCompleted:  {}, // 已完成状态不能再变更
+		OrderStatusIntCancelled:  {}, // 已取消状态不能再变更
+	}
+	
+	allowedStatuses, exists := validTransitions[os]
+	if !exists {
+		return false
+	}
+	
+	for _, allowed := range allowedStatuses {
+		if allowed == toStatus {
+			return true
+		}
+	}
+	return false
+}
+
 // ExtendedOrderItem 扩展的订单项（包含更多字段）
 type ExtendedOrderItem struct {
 	ID                 uint64  `json:"id"`

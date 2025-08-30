@@ -76,19 +76,27 @@ func (s *smsService) mockSendSMS(ctx context.Context, customerID uint64, templat
 
 // 短信模板常量
 const (
-	SMS_TEMPLATE_ORDER_CREATED   = "ORDER_CREATED"
-	SMS_TEMPLATE_PAYMENT_SUCCESS = "PAYMENT_SUCCESS"
-	SMS_TEMPLATE_PAYMENT_FAILURE = "PAYMENT_FAILURE"
-	SMS_TEMPLATE_ORDER_COMPLETED = "ORDER_COMPLETED"
+	SMS_TEMPLATE_ORDER_CREATED            = "ORDER_CREATED"
+	SMS_TEMPLATE_PAYMENT_SUCCESS          = "PAYMENT_SUCCESS"
+	SMS_TEMPLATE_PAYMENT_FAILURE          = "PAYMENT_FAILURE"
+	SMS_TEMPLATE_ORDER_COMPLETED          = "ORDER_COMPLETED"
+	SMS_TEMPLATE_ORDER_PROCESSING         = "ORDER_PROCESSING"
+	SMS_TEMPLATE_ORDER_CANCELLED          = "ORDER_CANCELLED"
+	SMS_TEMPLATE_ORDER_STATUS_CHANGED     = "ORDER_STATUS_CHANGED"
+	SMS_TEMPLATE_MERCHANT_ORDER_STATUS_CHANGED = "MERCHANT_ORDER_STATUS_CHANGED"
 )
 
 // getSMSTemplate 获取短信模板
 func getSMSTemplate(templateCode string) (string, error) {
 	templates := map[string]string{
-		SMS_TEMPLATE_ORDER_CREATED:   "您的订单${orderNumber}已创建成功，金额¥${amount}，请及时支付。",
-		SMS_TEMPLATE_PAYMENT_SUCCESS: "您的订单${orderNumber}支付成功，金额¥${amount}，我们将尽快处理。",
-		SMS_TEMPLATE_PAYMENT_FAILURE: "您的订单${orderNumber}支付失败，请重新支付或联系客服。",
-		SMS_TEMPLATE_ORDER_COMPLETED: "您的订单${orderNumber}已完成，感谢使用！",
+		SMS_TEMPLATE_ORDER_CREATED:            "您的订单${orderNumber}已创建成功，金额¥${amount}，请及时支付。",
+		SMS_TEMPLATE_PAYMENT_SUCCESS:          "您的订单${orderNumber}支付成功，金额¥${amount}，我们将尽快处理。",
+		SMS_TEMPLATE_PAYMENT_FAILURE:          "您的订单${orderNumber}支付失败，请重新支付或联系客服。",
+		SMS_TEMPLATE_ORDER_COMPLETED:          "您的订单${orderNumber}已完成，感谢使用！",
+		SMS_TEMPLATE_ORDER_PROCESSING:         "您的订单${orderNumber}已开始处理，我们将尽快为您完成。",
+		SMS_TEMPLATE_ORDER_CANCELLED:          "您的订单${orderNumber}已取消，原因：${reason}，如有疑问请联系客服。",
+		SMS_TEMPLATE_ORDER_STATUS_CHANGED:     "您的订单${orderNumber}状态已从${fromStatus}变更为${toStatus}。",
+		SMS_TEMPLATE_MERCHANT_ORDER_STATUS_CHANGED: "商户订单状态变更：订单${orderNumber}状态从${fromStatus}变更为${toStatus}。",
 	}
 
 	template, exists := templates[templateCode]
